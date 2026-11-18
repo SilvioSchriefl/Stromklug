@@ -182,6 +182,37 @@ export const STANDBY_STUNDEN: Standardwert = {
   annahme: true,
 };
 
+// ---------- Stromanbieter-Wechsel ----------
+
+const MONITORING_URL =
+  'https://data.bundesnetzagentur.de/Bundesnetzagentur/SharedDocs/Mediathek/Monitoringberichte/MonitoringberichtEnergie2025.pdf';
+
+export const PREIS_GRUNDVERSORGUNG: Standardwert = {
+  wert: 44.93,
+  einheit: 'ct/kWh',
+  quelle:
+    'Bundesnetzagentur/Bundeskartellamt, Monitoringbericht 2025: Durchschnittspreis Grundversorgung inkl. Grundpreis-Anteil (2.500–5.000 kWh, Stichtag 01.04.2025)',
+  url: MONITORING_URL,
+  stand: '2025-04-01',
+};
+
+export const PREIS_ANDERER_LIEFERANT: Standardwert = {
+  wert: 38.2,
+  einheit: 'ct/kWh',
+  quelle:
+    'Bundesnetzagentur/Bundeskartellamt, Monitoringbericht 2025: Durchschnittspreis Vertrag bei einem anderen Lieferanten inkl. Grundpreis-Anteil (Stichtag 01.04.2025)',
+  url: MONITORING_URL,
+  stand: '2025-04-01',
+};
+
+export const VERBRAUCH_3_PERSONEN_HAUS: Standardwert = {
+  wert: 3500,
+  einheit: 'kWh/Jahr',
+  quelle: 'Stromspiegel 2025 (co2online): 3-Personen-Haushalt im Haus, ohne elektrische Warmwasserbereitung',
+  url: 'https://www.stromspiegel.de/',
+  stand: '2025-05-01',
+};
+
 /** "2026-10-28" → "Oktober 2026" */
 export function formatStand(stand: string): string {
   const [jahr, monat] = stand.split('-').map(Number);

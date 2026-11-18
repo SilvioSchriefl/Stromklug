@@ -1,0 +1,306 @@
+---
+import CalculatorLayout from '@/layouts/CalculatorLayout.astro';
+import CalculatorShell from '@/components/calculator/CalculatorShell.astro';
+import NumberField from '@/components/calculator/NumberField.astro';
+import ResultMain from '@/components/calculator/ResultMain.astro';
+import ResultTiles from '@/components/calculator/ResultTiles.astro';
+import SourcesTable from '@/components/SourcesTable.astro';
+import AffiliateBox from '@/components/affiliate/AffiliateBox.astro';
+import { berechneWechsel, type WechselEingabe } from '@/lib/calculators/anbieterwechsel';
+import { ausgabeWechsel } from '@/lib/calculators/anbieterwechsel-ausgabe';
+import {
+  PREIS_ANDERER_LIEFERANT,
+  PREIS_GRUNDVERSORGUNG,
+  VERBRAUCH_3_PERSONEN_HAUS,
+  formatStand,
+} from '@/data/standardwerte';
+import { formatEuro, formatNumber } from '@/lib/format';
+
+const FORM_ID = 'wechsel';
+
+// Startwerte: Durchschnittspreise inkl. Grundpreis-Anteil → Grundpreis 0 €
+const standard: WechselEingabe = {
+  verbrauchKwh: VERBRAUCH_3_PERSONEN_HAUS.wert,
+  alt: { arbeitspreisCt: PREIS_GRUNDVERSORGUNG.wert, grundpreisMonatEuro: 0 },
+  neu: { arbeitspreisCt: PREIS_ANDERER_LIEFERANT.wert, grundpreisMonatEuro: 0 },
+  bonusEuro: 0,
+};
+const ergebnis = berechneWechsel(standard);
+const aus = ausgabeWechsel(ergebnis, standard);
+
+// Beispiel mit Grundpreis und Bonus (frei gewählte Beispieltarife, keine Marktdaten)
+const beispiel: WechselEingabe = {
+  verbrauchKwh: 2500,
+  alt: { arbeitspreisCt: 38, grundpreisMonatEuro: 12 },
+  neu: { arbeitspreisCt: 32, grundpreisMonatEuro: 15 },
+  bonusEuro: 60,
+};
+const bsp = berechneWechsel(beispiel);
+const stand = formatStand(PREIS_GRUNDVERSORGUNG.stand);
+
+const verbrauchTabelle = [
+  { haushalt: '1 Person', wohnung: 1200, haus: null },
+  { haushalt: '2 Personen', wohnung: 1900, haus: 2700 },
+  { haushalt: '3 Personen', wohnung: 2400, haus: 3500 },
+  { haushalt: '4 Personen', wohnung: 2600, haus: 3800 },
+];
+
+const faq = [
+  {
+    frage: 'Wie viel spare ich durch einen Wechsel des Stromanbieters?',
+    antwort: `Das hängt von deinem Tarif ab. Im Durchschnitt zahlten Haushalte in der Grundversorgung laut Monitoringbericht 2025 der Bundesnetzagentur ${formatNumber(PREIS_GRUNDVERSORGUNG.wert, 2)} ct/kWh, bei einem anderen Lieferanten ${formatNumber(PREIS_ANDERER_LIEFERANT.wert, 2)} ct/kWh (Stand ${stand}, jeweils inklusive Grundpreis-Anteil). Bei ${formatNumber(standard.verbrauchKwh)} kWh im Jahr sind das rund ${formatEuro(ergebnis.ersparnisFolgejahreEuro)} Unterschied.`,
+  },
+  {
+    frage: 'Wie schnell kann ich den Stromanbieter wechseln?',
+    antwort:
+      'Seit dem 6. Juni 2025 darf die technische Umstellung werktags höchstens 24 Stunden dauern. Deine Kündigungsfrist beim bisherigen Anbieter gilt aber weiter. In der Grundversorgung kannst du laut Verbraucherzentrale mit einer Frist von zwei Wochen kündigen – den Rest erledigt meist der neue Anbieter.',
+  },
+  {
+    frage: 'Kann beim Wechsel der Strom ausfallen?',
+    antwort:
+      'Nein. Die Stromversorgung läuft ohne Unterbrechung weiter. Sollte es beim Wechsel hängen oder ein Anbieter ausfallen, übernimmt automatisch der örtliche Grundversorger (Ersatzversorgung).',
+  },
+  {
+    frage: 'Worauf muss ich beim Neukundenbonus achten?',
+    antwort:
+      'Den Bonus gibt es nur einmal. Manche Anbieter zahlen ihn erst nach zwölf Monaten Belieferung aus. Danach wird der Tarif oft teurer. Rechne deshalb immer auch die Kosten ab dem zweiten Jahr – der Rechner zeigt sie dir getrennt.',
+  },
+  {
+    frage: 'Was ist der Unterschied zwischen Arbeitspreis und Grundpreis?',
+    antwort:
+      'Der Arbeitspreis ist der Preis pro verbrauchter Kilowattstunde. Der Grundpreis ist ein fester Betrag pro Monat oder Jahr, den du unabhängig vom Verbrauch zahlst. Bei niedrigem Verbrauch fällt der Grundpreis stärker ins Gewicht.',
+  },
+  {
+    frage: 'Wo finde ich meinen Jahresverbrauch?',
+    antwort:
+      'Auf deiner letzten Jahresabrechnung, meist auf der ersten Seite. Nimm den Verbrauch in kWh – nicht den monatlichen Abschlag. Hast du keine Abrechnung zur Hand, helfen die Durchschnittswerte aus dem Stromspiegel weiter unten.',
+  },
+];
+---
+
+<CalculatorLayout
+  title="Stromanbieter-Wechsel-Rechner: So viel sparst du"
+  description="Vergleiche deinen Stromtarif mit einem neuen Angebot: Ersparnis im ersten Jahr inklusive Bonus, Kosten ab dem zweiten Jahr und neuer Abschlag – mit Durchschnittspreisen der Bundesnetzagentur."
+  h1="Stromanbieter-Wechsel: Wie viel sparst du?"
+  intro="Trag deinen aktuellen Tarif und das neue Angebot ein. Der Rechner zeigt, was du im ersten Jahr sparst – und ob der neue Tarif auch nach dem Bonus noch günstiger ist."
+  slug="stromanbieter-wechsel-rechner"
+  faq={faq}
+  related={['stromkosten-rechner', 'standby-kosten-rechner', 'balkonkraftwerk-rechner']}
+>
+  <CalculatorShell id={FORM_ID}>
+    <Fragment slot="result">
+      <ResultMain label="Ersparnis im 1. Jahr" valueKey="ersparnis1" value={aus.ersparnis1} sentenceKey="satz" sentence={aus.satz} />
+      <ResultTiles
+        tiles={[
+          { label: 'Ersparnis ab dem 2. Jahr', key: 'folgejahre', value: aus.folgejahre, sub: 'ohne Bonus, bei gleichen Preisen', subKey: 'folgejahreSub' },
+          { label: 'Kosten bisher pro Jahr', key: 'kostenAlt', value: aus.kostenAlt, subKey: 'kostenAltSub', sub: aus.kostenAltSub },
+          { label: 'Kosten neu pro Jahr', key: 'kostenNeu', value: aus.kostenNeu, subKey: 'kostenNeuSub', sub: aus.kostenNeuSub },
+        ]}
+      />
+    </Fragment>
+
+    <NumberField
+      formId={FORM_ID}
+      name="verbrauch"
+      label="Dein Jahresverbrauch"
+      unit="kWh"
+      value={standard.verbrauchKwh}
+      min={100}
+      max={50000}
+      hint="Steht auf deiner Jahresabrechnung. Richtwerte: Tabelle weiter unten."
+    />
+    <NumberField
+      formId={FORM_ID}
+      name="bonus"
+      label="Bonus des neuen Anbieters"
+      unit="€"
+      value={standard.bonusEuro}
+      min={0}
+      max={2000}
+      hint="Einmaliger Neukunden- oder Sofortbonus. 0, wenn es keinen gibt."
+    />
+
+    <p class="border-t border-line pt-4 font-bold text-ink sm:col-span-2">Dein aktueller Tarif</p>
+    <NumberField
+      formId={FORM_ID}
+      name="altArbeit"
+      label="Arbeitspreis bisher"
+      unit="ct/kWh"
+      value={standard.alt.arbeitspreisCt}
+      decimals={2}
+      min={1}
+      max={150}
+      hint={`Startwert: Durchschnitt Grundversorgung inkl. Grundpreis (Bundesnetzagentur, ${stand}).`}
+    />
+    <NumberField
+      formId={FORM_ID}
+      name="altGrund"
+      label="Grundpreis bisher"
+      unit="€/Monat"
+      value={standard.alt.grundpreisMonatEuro}
+      decimals={2}
+      min={0}
+      max={100}
+      hint="Steht der Grundpreis pro Jahr auf der Rechnung: durch 12 teilen."
+    />
+
+    <p class="border-t border-line pt-4 font-bold text-ink sm:col-span-2">Neues Angebot</p>
+    <NumberField
+      formId={FORM_ID}
+      name="neuArbeit"
+      label="Arbeitspreis neu"
+      unit="ct/kWh"
+      value={standard.neu.arbeitspreisCt}
+      decimals={2}
+      min={1}
+      max={150}
+      hint={`Startwert: Durchschnitt anderer Lieferanten inkl. Grundpreis (Bundesnetzagentur, ${stand}).`}
+    />
+    <NumberField
+      formId={FORM_ID}
+      name="neuGrund"
+      label="Grundpreis neu"
+      unit="€/Monat"
+      value={standard.neu.grundpreisMonatEuro}
+      decimals={2}
+      min={0}
+      max={100}
+    />
+
+    <p slot="sticky" class="flex items-baseline justify-between gap-3 text-sm">
+      <span class="text-ink-soft">Ersparnis</span>
+      <strong class="text-base text-ink" data-out="sticky">{aus.sticky}</strong>
+    </p>
+  </CalculatorShell>
+
+  <AffiliateBox ids={['stromvergleich']} titel="Aktuelle Tarife finden" />
+
+  <article class="prose-page mt-12">
+    <h2>So rechnen wir</h2>
+    <p class="rounded-lg bg-surface p-4 font-mono text-sm text-ink">
+      Kosten pro Jahr = Verbrauch × Arbeitspreis + Grundpreis × 12<br />
+      Ersparnis im 1. Jahr = Kosten bisher − Kosten neu + Bonus<br />
+      Ersparnis ab dem 2. Jahr = Kosten bisher − Kosten neu
+    </p>
+    <ul>
+      <li>Wir nehmen an, dass beide Tarife ihre Preise über die Zeit halten. Preisänderungen kann niemand vorhersagen.</li>
+      <li>Der Bonus zählt nur im ersten Jahr.</li>
+      <li>
+        Die Startwerte sind Durchschnittspreise, die den Grundpreis bereits enthalten – deshalb steht der Grundpreis dort auf
+        0 €. Für dein Ergebnis trägst du die Werte aus deiner Rechnung und dem Angebot ein.
+      </li>
+      <li>Der Wechsel selbst ist in Deutschland kostenlos.</li>
+    </ul>
+
+    <h3>Standardwerte und Quellen</h3>
+  </article>
+  <SourcesTable
+    rows={[
+      { name: 'Preis Grundversorgung', wert: PREIS_GRUNDVERSORGUNG, decimals: 2 },
+      { name: 'Preis anderer Lieferant', wert: PREIS_ANDERER_LIEFERANT, decimals: 2 },
+      { name: 'Jahresverbrauch', wert: VERBRAUCH_3_PERSONEN_HAUS },
+    ]}
+  />
+
+  <article class="prose-page mt-10">
+    <h3>Typischer Stromverbrauch nach Haushaltsgröße</h3>
+    <p>
+      Durchschnittswerte laut <a href="https://www.stromspiegel.de/" rel="noopener">Stromspiegel 2025</a> in kWh pro Jahr,
+      ohne elektrische Warmwasserbereitung:
+    </p>
+  </article>
+  <div class="mt-4 overflow-x-auto rounded-xl border border-line">
+    <table class="w-full min-w-[20rem] text-right text-sm">
+      <caption class="sr-only">Typischer Stromverbrauch nach Haushaltsgröße</caption>
+      <thead class="bg-surface text-ink">
+        <tr>
+          <th scope="col" class="px-4 py-3 text-left font-semibold">Haushalt</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Wohnung</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Haus</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-line text-ink-soft">
+        {
+          verbrauchTabelle.map((z) => (
+            <tr>
+              <th scope="row" class="px-4 py-3 text-left font-medium text-ink">
+                {z.haushalt}
+              </th>
+              <td class="px-4 py-3 tabular-nums">{formatNumber(z.wohnung)}</td>
+              <td class="px-4 py-3 tabular-nums">{z.haus === null ? '–' : formatNumber(z.haus)}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <article class="prose-page mt-10">
+    <h2>Rechenbeispiel</h2>
+    <p>
+      Ein Haushalt verbraucht {formatNumber(beispiel.verbrauchKwh)} kWh im Jahr. Der bisherige Tarif kostet
+      {' '}{formatNumber(beispiel.alt.arbeitspreisCt)} ct/kWh und {formatEuro(beispiel.alt.grundpreisMonatEuro)} Grundpreis im Monat. Das
+      neue Angebot: {formatNumber(beispiel.neu.arbeitspreisCt)} ct/kWh, {formatEuro(beispiel.neu.grundpreisMonatEuro)} Grundpreis und
+      {' '}{formatEuro(beispiel.bonusEuro)} Neukundenbonus. (Frei gewählte Beispieltarife.)
+    </p>
+    <ul>
+      <li>
+        Bisher: {formatNumber(beispiel.verbrauchKwh)} kWh × {formatNumber(beispiel.alt.arbeitspreisCt / 100, 2)} € + 12 × {formatEuro(beispiel.alt.grundpreisMonatEuro)}
+        = <strong>{formatEuro(bsp.kostenAltEuro)}</strong>
+      </li>
+      <li>
+        Neu: {formatNumber(beispiel.verbrauchKwh)} kWh × {formatNumber(beispiel.neu.arbeitspreisCt / 100, 2)} € + 12 × {formatEuro(beispiel.neu.grundpreisMonatEuro)}
+        = <strong>{formatEuro(bsp.kostenNeuEuro)}</strong>
+      </li>
+      <li>Ersparnis ab dem 2. Jahr: <strong>{formatEuro(bsp.ersparnisFolgejahreEuro)}</strong></li>
+      <li>Ersparnis im 1. Jahr mit Bonus: <strong>{formatEuro(bsp.ersparnisJahr1Euro)}</strong></li>
+    </ul>
+    <p>
+      Obwohl der Grundpreis höher ist, lohnt sich das Angebot: Ab etwa {formatNumber(Math.round(bsp.gleichstandKwh ?? 0))} kWh
+      Jahresverbrauch ist es günstiger als der bisherige Tarif.
+    </p>
+
+    <h2>Typische Fehler beim Tarifvergleich</h2>
+    <ul>
+      <li>
+        <strong>Bonus dauerhaft eingerechnet:</strong> Den Neukundenbonus gibt es nur einmal. Entscheidend für die Zeit danach
+        ist die Ersparnis ab dem zweiten Jahr.
+      </li>
+      <li>
+        <strong>Abschlag statt Verbrauch:</strong> Der monatliche Abschlag ist eine Vorauszahlung, kein Verbrauch. Für den
+        Vergleich zählt die Kilowattstunden-Angabe auf der Jahresabrechnung.
+      </li>
+      <li>
+        <strong>Nur auf den Arbeitspreis geschaut:</strong> Ein niedriger Arbeitspreis mit hohem Grundpreis kann sich bei
+        kleinem Verbrauch nicht lohnen. Der Rechner zeigt dir, ab welchem Verbrauch sich das dreht.
+      </li>
+      <li>
+        <strong>Vorkasse und Kaution:</strong> Tarife, bei denen du für Monate im Voraus zahlst, sind riskant – geht der
+        Anbieter pleite, kann das Geld weg sein. Monatliche Abschläge sind sicherer.
+      </li>
+      <li>
+        <strong>Preisgarantie nicht geprüft:</strong> Manche Garantien gelten nur für einen Teil des Preises. Steuern, Abgaben
+        oder Netzentgelte können trotzdem steigen.
+      </li>
+    </ul>
+  </article>
+</CalculatorLayout>
+
+<script>
+  import { setupCalculator } from '@/lib/ui/calculator';
+  import { berechneWechsel } from '@/lib/calculators/anbieterwechsel';
+  import { ausgabeWechsel, ansageWechsel } from '@/lib/calculators/anbieterwechsel-ausgabe';
+
+  setupCalculator('wechsel', {
+    read: (f) => ({
+      verbrauchKwh: f.number('verbrauch'),
+      bonusEuro: f.number('bonus'),
+      alt: { arbeitspreisCt: f.number('altArbeit'), grundpreisMonatEuro: f.number('altGrund') },
+      neu: { arbeitspreisCt: f.number('neuArbeit'), grundpreisMonatEuro: f.number('neuGrund') },
+    }),
+    compute: berechneWechsel,
+    outputs: ausgabeWechsel,
+    hints: (r) => r.hinweise,
+    announce: ansageWechsel,
+  });
+</script>

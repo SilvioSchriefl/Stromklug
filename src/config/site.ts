@@ -57,7 +57,7 @@ export const CALCULATORS: CalculatorEntry[] = [
     slug: 'stromanbieter-wechsel-rechner',
     title: 'Stromanbieter-Wechsel',
     teaser: 'Wie viel sparst du, wenn du vom aktuellen Tarif zu einem günstigeren wechselst?',
-    status: 'bald',
+    status: 'live',
   },
 ];
 
