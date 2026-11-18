@@ -1,0 +1,19 @@
+---
+/**
+ * Zeigt einen Wert an – oder, wenn er leer ist, einen gut sichtbaren gelben Platzhalter.
+ * Verwendung: <Platzhalter wert={BETREIBER.name} label="Dein Name" />
+ */
+interface Props {
+  wert?: string;
+  label: string;
+}
+const { wert, label } = Astro.props;
+---
+
+{
+  wert && wert.trim() !== '' ? (
+    <Fragment>{wert}</Fragment>
+  ) : (
+    <mark class="rounded bg-amber-200 px-1 font-semibold text-ink">[PLATZHALTER: {label}]</mark>
+  )
+}

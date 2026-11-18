@@ -1,0 +1,50 @@
+---
+/**
+ * Empfehlungs-Box mit Affiliate-Links. Wird nur angezeigt, wenn mindestens
+ * einer der Links eine URL hat (siehe src/data/affiliate.ts).
+ *
+ * Verwendung: <AffiliateBox ids={['bkw-set', 'bkw-speicher']} />
+ */
+import AffiliateBadge from './AffiliateBadge.astro';
+import { aktiveLinks, type AffiliateId } from '@/data/affiliate';
+
+interface Props {
+  ids: AffiliateId[];
+  titel?: string;
+}
+const { ids, titel = 'Passende Produkte' } = Astro.props;
+const links = aktiveLinks(ids);
+---
+
+{
+  links.length > 0 && (
+    <aside aria-label="Anzeige: Produktempfehlungen" class="mt-10 rounded-xl border border-line bg-white p-5">
+      <div class="flex items-center justify-between gap-3">
+        <h2 class="text-lg font-bold text-ink">{titel}</h2>
+        <AffiliateBadge />
+      </div>
+      <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+        {links.map((l) => (
+          <li class="flex flex-col rounded-lg bg-surface p-4">
+            <span class="font-semibold text-ink">{l.titel}</span>
+            <span class="mt-1 flex-1 text-sm text-ink-soft">{l.beschreibung}</span>
+            <a
+              href={l.url}
+              rel="sponsored nofollow noopener"
+              target="_blank"
+              class="mt-3 inline-flex items-center gap-1 self-start rounded-lg bg-sea-700 px-4 py-2 text-sm font-semibold text-white hover:bg-sea-800"
+            >
+              {l.buttonText}
+              <span class="sr-only">(Anzeige, öffnet in neuem Tab)</span>
+              <span aria-hidden="true">↗</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <p class="mt-3 text-xs text-ink-soft">
+        Wir erhalten bei einem Kauf eine Provision, für dich ändert sich der Preis nicht.{' '}
+        <a href="/affiliate-hinweis/" class="underline">Mehr erfahren</a>
+      </p>
+    </aside>
+  )
+}

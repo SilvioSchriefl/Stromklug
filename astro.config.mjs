@@ -14,7 +14,12 @@ export default defineConfig({
   build: {
     format: 'directory',
   },
-  integrations: [sitemap()],
+  integrations: [
+    sitemap({
+      // Seiten mit "noindex" gehören nicht in die Sitemap
+      filter: (page) => !/\/(impressum|datenschutz)\/$/.test(page),
+    }),
+  ],
   vite: {
     plugins: [tailwindcss()],
   },

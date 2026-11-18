@@ -6,6 +6,7 @@ import SelectField from '@/components/calculator/SelectField.astro';
 import ResultMain from '@/components/calculator/ResultMain.astro';
 import ResultTiles from '@/components/calculator/ResultTiles.astro';
 import SourcesTable from '@/components/SourcesTable.astro';
+import AffiliateBox from '@/components/affiliate/AffiliateBox.astro';
 import pvgis from '@/data/pvgis-deutschland.json';
 import {
   AUSRICHTUNGEN,
@@ -228,6 +229,8 @@ const faq = [
       <strong class="text-base text-ink" data-out="sticky">{aus.sticky}</strong>
     </p>
   </CalculatorShell>
+
+  <AffiliateBox ids={['bkw-set', 'bkw-speicher']} titel="Balkonkraftwerk kaufen" />
 
   <article class="prose-page mt-12">
     <h2>So rechnen wir</h2>

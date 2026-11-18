@@ -1,0 +1,85 @@
+---
+import TextLayout from '@/layouts/TextLayout.astro';
+import Platzhalter from '@/components/Platzhalter.astro';
+import { BETREIBER, REDAKTION } from '@/config/rechtliches';
+---
+
+<TextLayout
+  title="Impressum"
+  description="Impressum und Anbieterkennzeichnung nach § 5 DDG."
+  h1="Impressum"
+  noindex
+>
+  <h2>Angaben gemäß § 5 DDG</h2>
+  <p>
+    <Platzhalter wert={BETREIBER.name} label="Vor- und Nachname" /><br />
+    <Platzhalter wert={BETREIBER.strasse} label="Straße und Hausnummer" /><br />
+    <Platzhalter wert={BETREIBER.plzOrt} label="PLZ und Ort" /><br />
+    {BETREIBER.land}
+  </p>
+
+  <h2>Kontakt</h2>
+  <p>
+    E-Mail: <Platzhalter wert={BETREIBER.email} label="E-Mail-Adresse" /><br />
+    Telefon: <Platzhalter wert={BETREIBER.telefon} label="Telefonnummer" />
+  </p>
+
+  {
+    BETREIBER.ustId && (
+      <Fragment>
+        <h2>Umsatzsteuer-ID</h2>
+        <p>Umsatzsteuer-Identifikationsnummer gemäß § 27a Umsatzsteuergesetz: {BETREIBER.ustId}</p>
+      </Fragment>
+    )
+  }
+
+  {
+    BETREIBER.wirtschaftsId && (
+      <Fragment>
+        <h2>Wirtschafts-Identifikationsnummer</h2>
+        <p>Wirtschafts-Identifikationsnummer gemäß § 139c Abgabenordnung: {BETREIBER.wirtschaftsId}</p>
+      </Fragment>
+    )
+  }
+
+  <h2>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
+  <p>
+    <Platzhalter wert={REDAKTION.name || BETREIBER.name} label="Name der verantwortlichen Person" /><br />
+    {
+      REDAKTION.anschrift ? (
+        REDAKTION.anschrift
+      ) : (
+        <Fragment>
+          <Platzhalter wert={BETREIBER.strasse} label="Straße und Hausnummer" />,{' '}
+          <Platzhalter wert={BETREIBER.plzOrt} label="PLZ und Ort" />
+        </Fragment>
+      )
+    }
+  </p>
+
+  <h2>Verbraucherstreitbeilegung</h2>
+  <p>
+    Wir sind nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle
+    teilzunehmen.
+  </p>
+
+  <h2>Haftung für Inhalte und Rechenergebnisse</h2>
+  <p>
+    Wir erstellen die Inhalte und Rechner sorgfältig und nennen die Quellen unserer Standardwerte. Alle Ergebnisse sind
+    jedoch Schätzungen auf Basis der angegebenen Annahmen. Sie ersetzen keine individuelle Beratung, etwa durch eine
+    Energieberatung, einen Elektrofachbetrieb oder eine Steuerberatung.
+  </p>
+
+  <h2>Haftung für Links</h2>
+  <p>
+    Unsere Seiten enthalten Links zu externen Websites, auf deren Inhalte wir keinen Einfluss haben. Für diese Inhalte ist
+    der jeweilige Anbieter verantwortlich. Zum Zeitpunkt der Verlinkung waren keine Rechtsverstöße erkennbar. Werden uns
+    Rechtsverletzungen bekannt, entfernen wir den Link umgehend.
+  </p>
+
+  <h2>Werbung und Affiliate-Links</h2>
+  <p>
+    Einige Links sind Werbe- bzw. Affiliate-Links und als solche gekennzeichnet. Details findest du im
+    <a href="/affiliate-hinweis/">Hinweis zu Affiliate-Links</a>.
+  </p>
+</TextLayout>

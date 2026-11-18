@@ -1,0 +1,40 @@
+---
+import TextLayout from '@/layouts/TextLayout.astro';
+import Platzhalter from '@/components/Platzhalter.astro';
+import { SITE } from '@/config/site';
+import { BETREIBER } from '@/config/rechtliches';
+---
+
+<TextLayout
+  title="Kontakt"
+  description={`So erreichst du ${SITE.name}: Fragen, Hinweise auf Fehler und Vorschläge für neue Rechner.`}
+  h1="Kontakt"
+>
+  <p>Du hast eine Frage, einen Fehler entdeckt oder eine Idee für einen neuen Rechner? Schreib uns gern.</p>
+
+  <h2>E-Mail</h2>
+  <p>
+    {
+      BETREIBER.email ? (
+        <a href={`mailto:${BETREIBER.email}`}>{BETREIBER.email}</a>
+      ) : (
+        <Platzhalter label="E-Mail-Adresse (in src/config/rechtliches.ts eintragen)" />
+      )
+    }
+  </p>
+
+  <h2>Bitte beachte</h2>
+  <ul>
+    <li>
+      Wir können keine individuelle Energie-, Rechts- oder Steuerberatung leisten. Für eine Beratung vor Ort wende dich zum
+      Beispiel an die Energieberatung der Verbraucherzentrale.
+    </li>
+    <li>Wenn du einen Fehler meldest, hilft uns: Welcher Rechner, welche Eingaben, welches Ergebnis hast du erwartet?</li>
+  </ul>
+
+  <p>
+    Informationen dazu, wie wir mit deiner Nachricht umgehen, findest du in der
+    <a href="/datenschutz/">Datenschutzerklärung</a>. Die vollständige Anbieterkennzeichnung steht im
+    <a href="/impressum/">Impressum</a>.
+  </p>
+</TextLayout>

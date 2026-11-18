@@ -1,0 +1,59 @@
+---
+import TextLayout from '@/layouts/TextLayout.astro';
+import Platzhalter from '@/components/Platzhalter.astro';
+import { SITE } from '@/config/site';
+import { BETREIBER } from '@/config/rechtliches';
+---
+
+<TextLayout
+  title="Über uns"
+  description={`Wer hinter ${SITE.name} steht, wie unsere Rechner arbeiten und wie wir uns finanzieren.`}
+  h1={`Über ${SITE.name}`}
+>
+  <p>
+    {SITE.name} hilft dir, Entscheidungen rund um Strom und Energie mit Zahlen zu treffen statt mit Bauchgefühl: Lohnt sich ein
+    Balkonkraftwerk? Was kostet ein Gerät im Jahr? Bringt ein Tarifwechsel genug?
+  </p>
+
+  <h2>Wer dahintersteht</h2>
+  <p>
+    <Platzhalter
+      label="2–4 Sätze über dich: Wer bist du, warum machst du diese Seite, welchen Bezug hast du zum Thema? Nur echte Angaben."
+    />
+  </p>
+  <p>Verantwortlich: <Platzhalter wert={BETREIBER.name} label="Vor- und Nachname" /></p>
+
+  <h2>So arbeiten wir</h2>
+  <ul>
+    <li>
+      <strong>Offene Rechenwege:</strong> Unter jedem Rechner steht, mit welcher Formel und welchen Annahmen wir rechnen.
+    </li>
+    <li>
+      <strong>Quellen mit Datum:</strong> Standardwerte wie der Strompreis stammen aus seriösen Quellen, etwa dem BDEW, der
+      Verbraucherzentrale, dem Umweltbundesamt oder dem EU-Solarrechner PVGIS. Zu jedem Wert nennen wir Quelle und Stand.
+    </li>
+    <li>
+      <strong>Eigene Annahmen klar markiert:</strong> Wo es keinen belastbaren Quellenwert gibt, treffen wir eine begründete
+      Annahme und kennzeichnen sie als solche.
+    </li>
+    <li><strong>Alles änderbar:</strong> Du kannst jeden Standardwert durch deine eigenen Zahlen ersetzen.</li>
+    <li>
+      <strong>Regelmäßige Aktualisierung:</strong> Wenn sich Preise oder Regeln ändern, passen wir die Werte an und
+      aktualisieren das Stand-Datum.
+    </li>
+  </ul>
+
+  <h2>Wie wir uns finanzieren</h2>
+  <p>
+    Die Rechner sind kostenlos. Finanzieren wollen wir die Seite über Werbung und sogenannte Affiliate-Links: Kaufst du über
+    einen solchen Link, erhalten wir eine kleine Provision, ohne dass du mehr bezahlst. Diese Links sind immer als Werbung
+    gekennzeichnet und haben keinen Einfluss auf die Rechenergebnisse. Mehr dazu im
+    <a href="/affiliate-hinweis/">Hinweis zu Affiliate-Links</a>.
+  </p>
+
+  <h2>Fehler gefunden?</h2>
+  <p>
+    Wenn dir ein Fehler auffällt oder ein Wert veraltet ist, freuen wir uns über eine Nachricht – siehe
+    <a href="/kontakt/">Kontakt</a>.
+  </p>
+</TextLayout>

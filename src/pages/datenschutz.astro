@@ -1,0 +1,128 @@
+---
+import TextLayout from '@/layouts/TextLayout.astro';
+import Platzhalter from '@/components/Platzhalter.astro';
+import { AUFSICHTSBEHOERDE, BETREIBER, DATENSCHUTZ_STAND } from '@/config/rechtliches';
+import { SITE } from '@/config/site';
+import { formatStand } from '@/data/standardwerte';
+
+// Abschnitt zu Cloudflare Web Analytics nur anzeigen, wenn die Statistik aktiviert ist
+const analyticsAktiv = SITE.cloudflareAnalyticsToken !== '';
+---
+
+<TextLayout
+  title="Datenschutzerklärung"
+  description="Informationen zur Verarbeitung personenbezogener Daten auf dieser Website nach DSGVO."
+  h1="Datenschutzerklärung"
+  noindex
+>
+  <p>
+    <strong>Kurz gesagt:</strong> Diese Website setzt keine Cookies, nutzt keine Tracking-Dienste und lädt keine Schriften oder
+    Skripte von fremden Servern. Was du in unsere Rechner eingibst, wird nur in deinem Browser berechnet und nicht an uns
+    übertragen.
+  </p>
+
+  <h2>1. Verantwortlicher</h2>
+  <p>
+    <Platzhalter wert={BETREIBER.name} label="Vor- und Nachname" /><br />
+    <Platzhalter wert={BETREIBER.strasse} label="Straße und Hausnummer" /><br />
+    <Platzhalter wert={BETREIBER.plzOrt} label="PLZ und Ort" /><br />
+    E-Mail: <Platzhalter wert={BETREIBER.email} label="E-Mail-Adresse" />
+  </p>
+
+  <h2>2. Hosting bei Cloudflare</h2>
+  <p>
+    Diese Website wird über Cloudflare Pages bereitgestellt. Anbieter ist die Cloudflare, Inc., 101 Townsend St., San
+    Francisco, CA 94107, USA. Wenn du die Website aufrufst, verarbeitet Cloudflare technisch notwendige Daten, um die Seiten
+    auszuliefern und vor Angriffen zu schützen. Dazu gehören insbesondere deine IP-Adresse, Datum und Uhrzeit des Abrufs, die
+    aufgerufene Seite, die Website, von der du kommst (Referrer), sowie Browser und Betriebssystem.
+  </p>
+  <p>
+    Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Unser berechtigtes Interesse liegt in einer sicheren, schnellen und
+    zuverlässigen Bereitstellung der Website. Mit Cloudflare besteht ein Vertrag zur Auftragsverarbeitung (Data Processing
+    Addendum). Cloudflare ist unter dem EU-US Data Privacy Framework zertifiziert; die Übermittlung in die USA stützt sich auf
+    den Angemessenheitsbeschluss der EU-Kommission (Art. 45 DSGVO).
+  </p>
+  <p>
+    Weitere Informationen:
+    <a href="https://www.cloudflare.com/de-de/privacypolicy/" rel="noopener">Datenschutzerklärung von Cloudflare</a>.
+  </p>
+
+  {
+    analyticsAktiv && (
+      <Fragment>
+        <h2>3. Reichweitenmessung mit Cloudflare Web Analytics</h2>
+        <p>
+          Um zu verstehen, welche Seiten genutzt werden, verwenden wir Cloudflare Web Analytics. Der Dienst arbeitet ohne
+          Cookies und ohne Wiedererkennung einzelner Besucher. Erfasst werden zusammengefasste Werte wie Seitenaufrufe,
+          verweisende Websites, Land, Browser, Gerätetyp und Ladezeiten. Anbieter ist die Cloudflare, Inc. (siehe Abschnitt 2).
+        </p>
+        <p>
+          Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Unser berechtigtes Interesse liegt darin, unser Angebot anhand der
+          Nutzung zu verbessern.
+        </p>
+      </Fragment>
+    )
+  }
+
+  <h2>{analyticsAktiv ? '4' : '3'}. Eingaben in den Rechnern</h2>
+  <p>
+    Alle Berechnungen finden direkt in deinem Browser statt. Deine Eingaben werden weder an uns noch an Dritte übertragen und
+    nicht gespeichert.
+  </p>
+
+  <h2>{analyticsAktiv ? '5' : '4'}. Schriften</h2>
+  <p>
+    Die verwendete Schrift wird von unserem eigenen Server geladen. Es besteht keine Verbindung zu Google Fonts oder anderen
+    Schriftanbietern.
+  </p>
+
+  <h2>{analyticsAktiv ? '6' : '5'}. Kontakt per E-Mail</h2>
+  <p>
+    Wenn du uns eine E-Mail schreibst, verarbeiten wir deine E-Mail-Adresse und den Inhalt deiner Nachricht, um deine Anfrage
+    zu beantworten. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (Beantwortung von Anfragen) bzw. Art. 6 Abs. 1 lit. b DSGVO,
+    wenn deine Anfrage auf einen Vertrag abzielt. Wir löschen die Daten, wenn sie für die Bearbeitung nicht mehr erforderlich
+    sind und keine gesetzlichen Aufbewahrungspflichten bestehen.
+  </p>
+
+  <h2>{analyticsAktiv ? '7' : '6'}. Affiliate-Links</h2>
+  <p>
+    Einige Links auf unserer Website sind als Werbung gekennzeichnete Affiliate-Links. Auf unserer Website werden dadurch keine
+    Daten erhoben. Erst wenn du einen solchen Link anklickst, gelangst du auf die Website des jeweiligen Anbieters. Dieser kann
+    dort eigene Cookies setzen, um die Vermittlung zuzuordnen. Dafür gilt die Datenschutzerklärung des jeweiligen Anbieters.
+  </p>
+
+  <h2>{analyticsAktiv ? '8' : '7'}. Deine Rechte</h2>
+  <p>Du hast gegenüber uns folgende Rechte hinsichtlich deiner personenbezogenen Daten:</p>
+  <ul>
+    <li>Auskunft (Art. 15 DSGVO)</li>
+    <li>Berichtigung (Art. 16 DSGVO)</li>
+    <li>Löschung (Art. 17 DSGVO)</li>
+    <li>Einschränkung der Verarbeitung (Art. 18 DSGVO)</li>
+    <li>Datenübertragbarkeit (Art. 20 DSGVO)</li>
+    <li>
+      Widerspruch gegen Verarbeitungen, die auf Art. 6 Abs. 1 lit. f DSGVO beruhen, aus Gründen, die sich aus deiner
+      besonderen Situation ergeben (Art. 21 DSGVO)
+    </li>
+  </ul>
+  <p>
+    Außerdem kannst du dich bei einer Datenschutz-Aufsichtsbehörde beschweren (Art. 77 DSGVO), zum Beispiel bei der für uns
+    zuständigen Behörde:
+    {
+      AUFSICHTSBEHOERDE.url ? (
+        <a href={AUFSICHTSBEHOERDE.url} rel="noopener">
+          {AUFSICHTSBEHOERDE.name}
+        </a>
+      ) : (
+        <Platzhalter wert={AUFSICHTSBEHOERDE.name} label="Aufsichtsbehörde deines Bundeslandes" />
+      )
+    }.
+  </p>
+
+  <h2>{analyticsAktiv ? '9' : '8'}. Verschlüsselung</h2>
+  <p>
+    Die Website wird ausschließlich verschlüsselt über HTTPS ausgeliefert. Das erkennst du am Schloss-Symbol in der
+    Adresszeile deines Browsers.
+  </p>
+
+  <p class="mt-8 text-sm">Stand: {formatStand(DATENSCHUTZ_STAND)}</p>
+</TextLayout>

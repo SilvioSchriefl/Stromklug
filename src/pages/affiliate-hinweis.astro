@@ -1,0 +1,59 @@
+---
+import TextLayout from '@/layouts/TextLayout.astro';
+import AffiliateBadge from '@/components/affiliate/AffiliateBadge.astro';
+import { SITE } from '@/config/site';
+import { AFFILIATE_PROGRAMME } from '@/data/affiliate';
+
+const aktiveProgramme = AFFILIATE_PROGRAMME.filter((p) => p.aktiv);
+---
+
+<TextLayout
+  title="Hinweis zu Affiliate-Links und Werbung"
+  description={`Wie ${SITE.name} Affiliate-Links kennzeichnet und warum sie die Rechenergebnisse nicht beeinflussen.`}
+  h1="Hinweis zu Affiliate-Links und Werbung"
+>
+  <p>
+    {SITE.name} ist kostenlos. Um die Seite zu finanzieren, nutzen wir Affiliate-Links. Hier erklären wir, was das ist und wie
+    du solche Links erkennst.
+  </p>
+
+  <h2>Was ist ein Affiliate-Link?</h2>
+  <p>
+    Ein Affiliate-Link führt zu einem Online-Shop oder Anbieter. Kaufst du dort nach dem Klick etwas oder schließt einen
+    Vertrag ab, erhalten wir vom Anbieter eine Provision. <strong>Für dich ändert sich der Preis dadurch nicht.</strong>
+  </p>
+
+  <h2>So erkennst du Affiliate-Links</h2>
+  <p>
+    Affiliate-Links sind bei uns immer mit dem Hinweis <AffiliateBadge /> gekennzeichnet. Technisch tragen sie das Attribut
+    <code>rel="sponsored nofollow"</code>, damit auch Suchmaschinen erkennen, dass es sich um Werbung handelt.
+  </p>
+
+  <h2>Kein Einfluss auf Ergebnisse</h2>
+  <ul>
+    <li>Unsere Rechner rechnen immer gleich – egal, ob ein Produkt einen Affiliate-Link hat oder nicht.</li>
+    <li>Standardwerte stammen aus unabhängigen Quellen, nicht von Händlern oder Herstellern.</li>
+    <li>Wenn sich eine Anschaffung laut Rechner nicht lohnt, sagen wir das auch.</li>
+  </ul>
+
+  <h2>Partnerprogramme</h2>
+  {
+    aktiveProgramme.length === 0 ? (
+      <p>Derzeit nehmen wir an keinem Partnerprogramm teil.</p>
+    ) : (
+      <ul>
+        {aktiveProgramme.map((p) => (
+          <li>
+            <strong>{p.name}:</strong> {p.pflichthinweis}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  <h2>Datenschutz</h2>
+  <p>
+    Auf unserer Website werden durch Affiliate-Links keine Cookies gesetzt. Erst nach einem Klick kann der Anbieter auf
+    seiner eigenen Website Cookies setzen. Details stehen in unserer <a href="/datenschutz/">Datenschutzerklärung</a>.
+  </p>
+</TextLayout>
