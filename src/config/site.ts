@@ -51,7 +51,7 @@ export const CALCULATORS: CalculatorEntry[] = [
     slug: 'standby-kosten-rechner',
     title: 'Standby-Kosten im Haushalt',
     teaser: 'Wie viel Geld verlieren Geräte, die nur auf „Bereitschaft“ stehen?',
-    status: 'bald',
+    status: 'live',
   },
   {
     slug: 'stromanbieter-wechsel-rechner',

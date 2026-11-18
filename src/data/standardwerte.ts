@@ -146,6 +146,42 @@ export const SPEICHER_LEBENSDAUER: Standardwert = {
   annahme: true,
 };
 
+// ---------- Standby ----------
+
+const EU_STANDBY_URL = 'https://energy-efficient-products.ec.europa.eu/product-list/standby-networked-standby-and-mode_en';
+
+export const EU_STANDBY_OHNE_ANZEIGE: Standardwert = {
+  wert: 0.5,
+  einheit: 'W',
+  quelle: 'EU-Höchstwert für neue Geräte im Bereitschaftsbetrieb ohne Anzeige (Verordnung (EU) 2023/826, gilt seit 09.05.2025)',
+  url: EU_STANDBY_URL,
+  stand: '2025-05-09',
+};
+
+export const EU_STANDBY_MIT_ANZEIGE: Standardwert = {
+  wert: 0.8,
+  einheit: 'W',
+  quelle: 'EU-Höchstwert für neue Geräte im Bereitschaftsbetrieb mit Anzeige, z. B. Uhr oder Statuslicht (Verordnung (EU) 2023/826)',
+  url: EU_STANDBY_URL,
+  stand: '2025-05-09',
+};
+
+export const EU_STANDBY_VERNETZT: Standardwert = {
+  wert: 2,
+  einheit: 'W',
+  quelle: 'EU-Höchstwert für neue Geräte im vernetzten Bereitschaftsbetrieb, z. B. per WLAN oder App einschaltbar (Verordnung (EU) 2023/826)',
+  url: EU_STANDBY_URL,
+  stand: '2025-05-09',
+};
+
+export const STANDBY_STUNDEN: Standardwert = {
+  wert: 20,
+  einheit: 'h pro Tag',
+  quelle: 'Annahme: Geräte werden etwa 4 Stunden am Tag benutzt und stehen die übrige Zeit im Standby',
+  stand: '2026-11-18',
+  annahme: true,
+};
+
 /** "2026-10-28" → "Oktober 2026" */
 export function formatStand(stand: string): string {
   const [jahr, monat] = stand.split('-').map(Number);

@@ -27,7 +27,8 @@ const hasAdvanced = Astro.slots.has('advanced');
 
   <p data-status class="sr-only" role="status" aria-live="polite"></p>
 
-  <fieldset class="p-5 sm:p-6">
+  <!-- min-w-0: fieldset ist sonst nie schmaler als sein Inhalt → seitliches Scrollen auf dem Handy -->
+  <fieldset class="min-w-0 p-5 sm:p-6">
     <legend class="sr-only">{inputsTitle}</legend>
     <h2 class="text-lg font-bold text-ink">{inputsTitle}</h2>
     <div class="mt-4 grid gap-5 sm:grid-cols-2">

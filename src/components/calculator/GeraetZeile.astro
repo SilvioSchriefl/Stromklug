@@ -1,0 +1,62 @@
+---
+/**
+ * Kompakte Zeile für Gerätelisten: Name | Anzahl | Leistung in W.
+ * Felder heißen "<id>-anzahl" und "<id>-watt" (für setupCalculator → f.number(...)).
+ */
+import { formatNumber } from '@/lib/format';
+
+interface Props {
+  formId: string;
+  id: string;
+  name: string;
+  anzahl: number;
+  watt: number;
+  hint?: string;
+  maxAnzahl?: number;
+  maxWatt?: number;
+}
+const { formId, id, name, anzahl, watt, hint, maxAnzahl = 20, maxWatt = 100 } = Astro.props;
+const base = `${formId}-${id}`;
+const inputClass =
+  'w-full min-w-0 rounded-lg border border-line bg-white px-2 py-2 text-right text-base text-ink focus:border-sea-600 focus:ring-2 focus:ring-sea-600/30 focus:outline-none aria-[invalid=true]:bg-red-50';
+---
+
+<div class="grid grid-cols-[1fr_4.5rem_6rem] items-center gap-x-2 gap-y-1 border-b border-line py-3 last:border-b-0">
+  <div>
+    <span class="font-medium text-ink">{name}</span>
+    {hint && <span class="block text-xs text-ink-soft">{hint}</span>}
+  </div>
+  <div>
+    <label for={`${base}-anzahl`} class="sr-only">Anzahl {name}</label>
+    <input
+      id={`${base}-anzahl`}
+      name={`${id}-anzahl`}
+      type="text"
+      inputmode="numeric"
+      autocomplete="off"
+      value={String(anzahl)}
+      data-min="0"
+      data-max={maxAnzahl}
+      aria-describedby={`${base}-anzahl-error`}
+      class={inputClass}
+    />
+  </div>
+  <div class="flex items-center gap-1">
+    <label for={`${base}-watt`} class="sr-only">Standby-Leistung {name} in Watt</label>
+    <input
+      id={`${base}-watt`}
+      name={`${id}-watt`}
+      type="text"
+      inputmode="decimal"
+      autocomplete="off"
+      value={formatNumber(watt, watt % 1 === 0 ? 0 : 1)}
+      data-min="0"
+      data-max={maxWatt}
+      aria-describedby={`${base}-watt-error`}
+      class={inputClass}
+    />
+    <span aria-hidden="true" class="text-sm text-ink-soft">W</span>
+  </div>
+  <p id={`${base}-anzahl-error`} class="col-span-3 text-sm font-medium text-red-700" hidden></p>
+  <p id={`${base}-watt-error`} class="col-span-3 text-sm font-medium text-red-700" hidden></p>
+</div>

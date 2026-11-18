@@ -1,0 +1,275 @@
+---
+import CalculatorLayout from '@/layouts/CalculatorLayout.astro';
+import CalculatorShell from '@/components/calculator/CalculatorShell.astro';
+import NumberField from '@/components/calculator/NumberField.astro';
+import SelectField from '@/components/calculator/SelectField.astro';
+import StrompreisField from '@/components/calculator/StrompreisField.astro';
+import GeraetZeile from '@/components/calculator/GeraetZeile.astro';
+import ResultMain from '@/components/calculator/ResultMain.astro';
+import ResultTiles from '@/components/calculator/ResultTiles.astro';
+import SourcesTable from '@/components/SourcesTable.astro';
+import AffiliateBox from '@/components/affiliate/AffiliateBox.astro';
+import { GERAETE, berechneStandby, kwhProJahr, type StandbyEingabe } from '@/lib/calculators/standby';
+import { ausgabeStandby } from '@/lib/calculators/standby-ausgabe';
+import {
+  EU_STANDBY_MIT_ANZEIGE,
+  EU_STANDBY_OHNE_ANZEIGE,
+  EU_STANDBY_VERNETZT,
+  STANDBY_STUNDEN,
+  STROMPREIS,
+} from '@/data/standardwerte';
+import { formatEuroCent, formatNumber } from '@/lib/format';
+
+const FORM_ID = 'standby';
+
+const standard: StandbyEingabe = {
+  modus: 'geraete',
+  geraete: GERAETE.map((g) => ({ id: g.id, name: g.name, anzahl: g.anzahl, watt: g.grenzwert.wert })),
+  gemessenW: 20,
+  stundenProTag: STANDBY_STUNDEN.wert,
+  strompreisCt: STROMPREIS.wert,
+};
+const ergebnis = berechneStandby(standard);
+const aus = ausgabeStandby(ergebnis, standard);
+const preis = formatNumber(STROMPREIS.wert, 1);
+const preisEuro = STROMPREIS.wert / 100;
+
+// Beispiele für Texte
+const einWattJahr = kwhProJahr(1, 24);
+const zehnWatt = kwhProJahr(10, STANDBY_STUNDEN.wert) * preisEuro;
+const gemessen20 = berechneStandby({ ...standard, modus: 'gemessen', gemessenW: 20 });
+
+const faq = [
+  {
+    frage: 'Wie viel kostet Standby im Jahr?',
+    antwort: `Jedes Watt, das rund um die Uhr läuft, ergibt ${formatNumber(einWattJahr, 2)} kWh im Jahr – bei ${preis} ct/kWh rund ${formatEuroCent(einWattJahr * preisEuro)}. Wie viel es bei dir insgesamt ist, hängt stark vom Alter der Geräte ab: Neue Geräte dürfen nur wenige Watt ziehen, ältere oft deutlich mehr. Am genauesten ist eine Messung.`,
+  },
+  {
+    frage: 'Wie viel Standby-Verbrauch ist erlaubt?',
+    antwort: `Für neue Geräte gelten seit 9. Mai 2025 EU-Höchstwerte: ${formatNumber(EU_STANDBY_OHNE_ANZEIGE.wert, 1)} W im Bereitschaftsbetrieb ohne Anzeige, ${formatNumber(EU_STANDBY_MIT_ANZEIGE.wert, 1)} W mit Anzeige (z. B. Uhr) und ${formatNumber(EU_STANDBY_VERNETZT.wert)} W, wenn das Gerät vernetzt ist und sich zum Beispiel per App einschalten lässt (Verordnung (EU) 2023/826). Für einige Gerätegruppen gelten eigene Regeln. Ältere Geräte, die vor diesen Vorgaben verkauft wurden, liegen oft darüber.`,
+  },
+  {
+    frage: 'Lohnt sich eine abschaltbare Steckdosenleiste?',
+    antwort: `Meist ja, wenn mehrere Geräte an einem Ort stehen – etwa Fernseher, Receiver und Soundsystem. Ziehen sie zusammen 10 W und stehen ${formatNumber(STANDBY_STUNDEN.wert)} Stunden am Tag im Standby, sind das bei ${preis} ct/kWh rund ${formatEuroCent(zehnWatt)} im Jahr. Eine einfache Leiste mit Schalter hat sich damit schnell bezahlt gemacht.`,
+  },
+  {
+    frage: 'Welche Geräte sollte ich nicht komplett vom Netz trennen?',
+    antwort:
+      'Kühl- und Gefriergeräte natürlich nicht. Vorsicht auch bei Geräten, die nachts Updates laden, Aufnahmen programmiert haben oder nach dem Einschalten lange brauchen – etwa manche Receiver. Tintenstrahldrucker reinigen sich nach dem Einschalten teils automatisch, was Tinte kostet. Im Zweifel: in die Bedienungsanleitung schauen.',
+  },
+  {
+    frage: 'Wie messe ich den Standby-Verbrauch?',
+    antwort:
+      'Am einfachsten mit einem Strommessgerät, das zwischen Steckdose und Gerät gesteckt wird. Alternativ über den Stromzähler: Schalte alle Geräte in den Standby, lies den Zählerstand ab und nach genau einer Stunde noch einmal. Die Differenz in Wattstunden entspricht der Leistung in Watt – abzüglich der Geräte, die ohnehin laufen, wie Kühlschrank und Router.',
+  },
+  {
+    frage: 'Zählt der WLAN-Router zum Standby?',
+    antwort:
+      'Nein. Der Router ist dauerhaft in Betrieb und nicht im Standby. Sein Verbrauch gehört deshalb nicht in diesen Rechner. Was er kostet, rechnest du mit unserem Stromkosten-Rechner aus (24 Stunden Betrieb).',
+  },
+];
+---
+
+<CalculatorLayout
+  title="Standby-Kosten-Rechner: Was kostet Standby im Haushalt?"
+  description="Berechne, wie viel Strom und Geld deine Geräte im Standby verbrauchen – pro Gerät oder per Messwert. Mit EU-Grenzwerten und aktuellem Strompreis."
+  h1="Standby-Kosten-Rechner: Was kosten Geräte im Standby?"
+  intro="Fernseher, Receiver und Kaffeemaschine ziehen auch „aus“ Strom. Trag deine Geräte ein oder nutze einen Messwert – der Rechner zeigt, wie viel dich das im Jahr kostet."
+  slug="standby-kosten-rechner"
+  faq={faq}
+  related={['stromkosten-rechner', 'stromanbieter-wechsel-rechner', 'balkonkraftwerk-rechner']}
+>
+  <CalculatorShell id={FORM_ID}>
+    <Fragment slot="result">
+      <ResultMain label="Standby-Kosten pro Jahr" valueKey="kostenJahr" value={aus.kostenJahr} sentenceKey="satz" sentence={aus.satz} />
+      <ResultTiles
+        tiles={[
+          { label: 'Verbrauch pro Jahr', key: 'verbrauch', value: aus.verbrauch, subKey: 'leistung', sub: aus.leistung },
+          { label: 'Größter Posten', key: 'groesster', value: aus.groesster, subKey: 'groessterSub', sub: aus.groessterSub },
+          { label: 'Kosten in 10 Jahren', key: 'kosten10', value: aus.kosten10 },
+        ]}
+      />
+    </Fragment>
+
+    <SelectField
+      formId={FORM_ID}
+      name="modus"
+      label="Wie willst du rechnen?"
+      value={standard.modus}
+      options={[
+        { value: 'geraete', label: 'Geräte einzeln eintragen' },
+        { value: 'gemessen', label: 'Gesamtwert gemessen' },
+      ]}
+    />
+    <NumberField
+      formId={FORM_ID}
+      name="stunden"
+      label="Stunden pro Tag im Standby"
+      unit="h"
+      value={standard.stundenProTag}
+      min={0}
+      max={24}
+      hint="Zeit, in der die Geräte nicht benutzt werden, aber eingesteckt sind."
+    />
+
+    <div class="sm:col-span-2" data-show-when="modus=geraete">
+      <p class="font-semibold text-ink">Deine Geräte</p>
+      <p class="mt-1 text-sm text-ink-soft">
+        Startwerte sind die EU-Höchstwerte für neue Geräte. Ältere Geräte verbrauchen oft mehr – miss nach oder trag Werte aus
+        dem Datenblatt ein.
+      </p>
+      <div class="mt-3 rounded-lg border border-line px-3">
+        <div aria-hidden="true" class="grid grid-cols-[1fr_4.5rem_6rem] gap-x-2 border-b border-line py-2 text-xs font-semibold tracking-wide text-ink-soft uppercase">
+          <span>Gerät</span><span class="text-right">Anzahl</span><span class="pr-4 text-right">Standby</span>
+        </div>
+        {
+          GERAETE.map((g) => (
+            <GeraetZeile
+              formId={FORM_ID}
+              id={g.id}
+              name={g.name}
+              anzahl={g.anzahl}
+              watt={g.grenzwert.wert}
+              hint={`Neugerät max. ${formatNumber(g.grenzwert.wert, g.grenzwert.wert % 1 === 0 ? 0 : 1)} W (${g.grenzwertArt})`}
+            />
+          ))
+        }
+      </div>
+    </div>
+
+    <NumberField
+      formId={FORM_ID}
+      name="gemessen"
+      label="Gemessene Standby-Leistung gesamt"
+      unit="W"
+      value={standard.gemessenW}
+      decimals={1}
+      min={0}
+      max={2000}
+      hint="Summe aller Geräte im Standby – ohne Kühlschrank und Router."
+      showWhen="modus=gemessen"
+      hidden
+    />
+    <StrompreisField formId={FORM_ID} />
+
+    <p slot="sticky" class="flex items-baseline justify-between gap-3 text-sm">
+      <span class="text-ink-soft">Standby</span>
+      <strong class="text-base text-ink" data-out="sticky">{aus.sticky}</strong>
+    </p>
+  </CalculatorShell>
+
+  <AffiliateBox ids={['strommessgeraet']} titel="Standby selbst messen" />
+
+  <article class="prose-page mt-12">
+    <h2>So rechnen wir</h2>
+    <p class="rounded-lg bg-surface p-4 font-mono text-sm text-ink">
+      Standby-Leistung = Σ (Anzahl × Watt pro Gerät)<br />
+      Verbrauch (kWh/Jahr) = Standby-Leistung × Stunden pro Tag × 365 ÷ 1.000<br />
+      Kosten = Verbrauch × Strompreis
+    </p>
+    <ul>
+      <li>
+        <strong>Startwerte:</strong> Für jedes Gerät nutzen wir den EU-Höchstwert, den ein neues Gerät dieser Art im
+        Standby haben darf. Das ist der günstigste Fall – bei älteren Geräten ist der Verbrauch oft höher.
+      </li>
+      <li>
+        <strong>Standby-Zeit:</strong> Wir nehmen an, dass die Geräte {formatNumber(STANDBY_STUNDEN.wert)} Stunden am Tag
+        ungenutzt eingesteckt sind. Den Wert kannst du ändern.
+      </li>
+      <li>
+        <strong>Nicht enthalten:</strong> Geräte, die dauerhaft arbeiten – Kühlschrank, Gefriertruhe, WLAN-Router. Sie sind
+        nicht im Standby, sondern in Betrieb.
+      </li>
+    </ul>
+
+    <h3>Standardwerte und Quellen</h3>
+  </article>
+  <SourcesTable
+    rows={[
+      { name: 'Standby ohne Anzeige', wert: EU_STANDBY_OHNE_ANZEIGE, decimals: 1 },
+      { name: 'Standby mit Anzeige', wert: EU_STANDBY_MIT_ANZEIGE, decimals: 1 },
+      { name: 'Vernetzter Standby', wert: EU_STANDBY_VERNETZT },
+      { name: 'Standby-Stunden', wert: STANDBY_STUNDEN },
+      { name: 'Strompreis', wert: STROMPREIS, decimals: 1 },
+    ]}
+  />
+
+  <article class="prose-page mt-10">
+    <h2>Rechenbeispiel</h2>
+    <p>
+      Mit den Startwerten – {ergebnis.posten.length} Geräte mit zusammen {formatNumber(ergebnis.leistungW, 1)} W, alle als neue
+      Geräte gerechnet – ergeben sich bei {formatNumber(STANDBY_STUNDEN.wert)} Standby-Stunden am Tag:
+    </p>
+    <ul>
+      <li>
+        Verbrauch: {formatNumber(ergebnis.leistungW, 1)} W × {formatNumber(STANDBY_STUNDEN.wert)} h × 365 ÷ 1.000 =
+        {' '}{formatNumber(ergebnis.verbrauchKwhJahr, 1)} kWh pro Jahr
+      </li>
+      <li>
+        Kosten: {formatNumber(ergebnis.verbrauchKwhJahr, 1)} kWh × {formatNumber(preisEuro, 3)} € =
+        <strong>{formatEuroCent(ergebnis.kostenJahrEuro)} pro Jahr</strong>
+      </li>
+    </ul>
+    <p>
+      Misst du bei deinen Geräten stattdessen zusammen 20 W, sind es bereits
+      {' '}{formatEuroCent(gemessen20.kostenJahrEuro)} im Jahr.
+    </p>
+
+    <h2>So findest du heraus, was deine Geräte wirklich verbrauchen</h2>
+    <ol>
+      <li><strong>Datenblatt:</strong> Die Standby-Leistung steht oft in der Anleitung oder im Produktdatenblatt.</li>
+      <li>
+        <strong>Strommessgerät:</strong> Zwischen Steckdose und Gerät (oder Steckdosenleiste) stecken, Gerät in den Standby
+        schalten, Wert ablesen.
+      </li>
+      <li>
+        <strong>Stromzähler:</strong> Alle Geräte in den Standby schalten, Zählerstand notieren, nach einer Stunde erneut ablesen.
+        Die Differenz in Wattstunden entspricht der Leistung in Watt – abzüglich Kühlschrank, Router und anderer Dauerläufer.
+      </li>
+    </ol>
+
+    <h2>Typische Fehler bei der Berechnung</h2>
+    <ul>
+      <li>
+        <strong>Kühlschrank und Router mitgezählt:</strong> Sie arbeiten dauerhaft und sind nicht im Standby. Wer sie
+        mitrechnet, überschätzt das Sparpotenzial durch Abschalten.
+      </li>
+      <li>
+        <strong>„Aus“ heißt nicht „vom Netz“:</strong> Viele Geräte haben keinen echten Netzschalter. Auch wenn sie dunkel
+        sind, kann das Netzteil weiter Strom ziehen.
+      </li>
+      <li>
+        <strong>Schnellstart-Funktionen übersehen:</strong> Fernseher und Spielkonsolen bieten oft einen Modus für schnelles
+        Einschalten. Der kann deutlich mehr verbrauchen als der normale Standby – prüfe die Einstellungen.
+      </li>
+      <li>
+        <strong>Nur 1 Gerät betrachtet:</strong> Einzeln wirken ein paar Watt harmlos. Erst die Summe aller Geräte über ein
+        ganzes Jahr zeigt, was zusammenkommt.
+      </li>
+    </ul>
+  </article>
+</CalculatorLayout>
+
+<script>
+  import { setupCalculator } from '@/lib/ui/calculator';
+  import { GERAETE, berechneStandby, type StandbyModus } from '@/lib/calculators/standby';
+  import { ausgabeStandby, ansageStandby } from '@/lib/calculators/standby-ausgabe';
+
+  setupCalculator('standby', {
+    read: (f) => ({
+      modus: f.select<StandbyModus>('modus'),
+      geraete: GERAETE.map((g) => ({
+        id: g.id,
+        name: g.name,
+        anzahl: f.number(`${g.id}-anzahl`),
+        watt: f.number(`${g.id}-watt`),
+      })),
+      gemessenW: f.number('gemessen'),
+      stundenProTag: f.number('stunden'),
+      strompreisCt: f.number('strompreis'),
+    }),
+    compute: berechneStandby,
+    outputs: ausgabeStandby,
+    announce: ansageStandby,
+  });
+</script>
