@@ -1,0 +1,39 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { alleArtikel, formatDatum } from '@/lib/ratgeber';
+
+const artikel = await alleArtikel();
+---
+
+<BaseLayout
+  title="Ratgeber: Strom sparen und Balkonkraftwerk"
+  description="Verständliche Ratgeber rund um Balkonkraftwerk, Stromkosten und Stromtarife – mit Quellen und passenden Rechnern."
+  noindex={artikel.length === 0}
+>
+  <div class="container-page py-8 sm:py-12">
+    <h1 class="text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">Ratgeber</h1>
+    <p class="mt-3 max-w-prose text-lg text-ink-soft">
+      Hintergründe und Anleitungen rund um Strom sparen – kurz erklärt, mit Quellen und passenden Rechnern.
+    </p>
+    {
+      artikel.length === 0 ? (
+        <p class="mt-8 text-ink-soft">Die ersten Artikel erscheinen in Kürze.</p>
+      ) : (
+        <ul class="mt-8 grid gap-4 sm:grid-cols-2">
+          {artikel.map((a) => (
+            <li>
+              <a
+                href={`/ratgeber/${a.id}/`}
+                class="block h-full rounded-xl border border-line bg-white p-5 shadow-sm transition hover:border-brand-600 hover:shadow-md"
+              >
+                <h2 class="text-lg font-semibold text-ink">{a.data.titel}</h2>
+                <p class="mt-2 text-ink-soft">{a.data.beschreibung}</p>
+                <p class="mt-3 text-sm text-ink-soft">{formatDatum(a.data.aktualisiert ?? a.data.veroeffentlicht)}</p>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </div>
+</BaseLayout>

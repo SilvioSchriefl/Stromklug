@@ -1,0 +1,105 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { CALCULATORS, SITE } from '@/config/site';
+import { alleArtikel, formatDatum, type Artikel } from '@/lib/ratgeber';
+
+export async function getStaticPaths() {
+  const artikel = await alleArtikel();
+  return artikel.map((a) => ({ params: { slug: a.id }, props: { artikel: a } }));
+}
+
+interface Props {
+  artikel: Artikel;
+}
+const { artikel } = Astro.props;
+const { Content } = await render(artikel);
+const d = artikel.data;
+const url = new URL(`/ratgeber/${artikel.id}/`, Astro.site).toString();
+const rechner = d.rechner
+  .map((s) => CALCULATORS.find((c) => c.slug === s && c.status === 'live'))
+  .filter((c): c is NonNullable<typeof c> => Boolean(c));
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Article',
+      headline: d.titel,
+      description: d.beschreibung,
+      datePublished: d.veroeffentlicht.toISOString(),
+      dateModified: (d.aktualisiert ?? d.veroeffentlicht).toISOString(),
+      inLanguage: 'de-DE',
+      mainEntityOfPage: url,
+      publisher: { '@type': 'Organization', name: SITE.name, url: Astro.site?.toString() },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Start', item: Astro.site?.toString() },
+        { '@type': 'ListItem', position: 2, name: 'Ratgeber', item: new URL('/ratgeber/', Astro.site).toString() },
+        { '@type': 'ListItem', position: 3, name: d.titel, item: url },
+      ],
+    },
+  ],
+};
+---
+
+<BaseLayout title={d.titel} description={d.beschreibung} jsonLd={jsonLd}>
+  <article class="container-page pt-4 pb-8">
+    <nav aria-label="Brotkrümelnavigation" class="text-sm text-ink-soft">
+      <ol class="flex flex-wrap items-center gap-1">
+        <li><a href="/" class="underline underline-offset-2 hover:text-ink">Start</a></li>
+        <li aria-hidden="true">›</li>
+        <li><a href="/ratgeber/" class="underline underline-offset-2 hover:text-ink">Ratgeber</a></li>
+        <li aria-hidden="true">›</li>
+        <li aria-current="page">{d.titel}</li>
+      </ol>
+    </nav>
+
+    <h1 class="mt-4 max-w-3xl text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">{d.titel}</h1>
+    <p class="mt-3 text-sm text-ink-soft">
+      Veröffentlicht am {formatDatum(d.veroeffentlicht)}
+      {d.aktualisiert && <Fragment> · aktualisiert am {formatDatum(d.aktualisiert)}</Fragment>}
+    </p>
+
+    {
+      rechner.length > 0 && (
+        <aside class="mt-6 rounded-xl border border-brand-200 bg-brand-50 p-4">
+          <p class="font-semibold text-ink">Direkt ausrechnen:</p>
+          <ul class="mt-2 flex flex-wrap gap-2">
+            {rechner.map((c) => (
+              <li>
+                <a href={`/${c.slug}/`} class="btn-primary px-4 py-2 text-sm">
+                  {c.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )
+    }
+
+    <div class="prose-page mt-8">
+      <Content />
+    </div>
+
+    {
+      d.quellen.length > 0 && (
+        <section aria-labelledby="quellen-titel" class="prose-page mt-10 border-t border-line pt-6">
+          <h2 id="quellen-titel">Quellen</h2>
+          <ul>
+            {d.quellen.map((q) => (
+              <li>
+                <a href={q.url} rel="noopener">
+                  {q.titel}
+                </a>
+                {q.stand && <Fragment> (Stand {q.stand})</Fragment>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+  </article>
+</BaseLayout>

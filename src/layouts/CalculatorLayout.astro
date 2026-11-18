@@ -6,6 +6,7 @@
 import BaseLayout from './BaseLayout.astro';
 import Faq, { type FaqItem } from '@/components/Faq.astro';
 import { CALCULATORS, SITE } from '@/config/site';
+import { artikelZuRechner } from '@/lib/ratgeber';
 
 interface Props {
   /** Für den <title>, z. B. "Balkonkraftwerk-Rechner: Ertrag & Amortisation" */
@@ -25,6 +26,7 @@ const current = CALCULATORS.find((c) => c.slug === slug);
 const relatedCalcs = related
   .map((s) => CALCULATORS.find((c) => c.slug === s))
   .filter((c): c is NonNullable<typeof c> => Boolean(c));
+const artikel = await artikelZuRechner(slug);
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -75,6 +77,25 @@ const jsonLd = {
     </div>
 
     <Faq items={faq} />
+
+    {
+      artikel.length > 0 && (
+        <section aria-labelledby="ratgeber-titel" class="mt-12">
+          <h2 id="ratgeber-titel" class="text-2xl font-bold text-ink">
+            Ratgeber zum Thema
+          </h2>
+          <ul class="mt-4 space-y-2">
+            {artikel.map((a) => (
+              <li>
+                <a href={`/ratgeber/${a.id}/`} class="font-medium text-sea-700 underline underline-offset-2 hover:text-sea-900">
+                  {a.data.titel}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
 
     {
       relatedCalcs.length > 0 && (
