@@ -2,8 +2,19 @@
 /* Schrift wird selbst gehostet (kein Google-Fonts-Aufruf, DSGVO-freundlich). */
 @import '@fontsource-variable/inter';
 
+/* Ersatzschrift mit an Inter angeglichenen Maßen: Solange Inter lädt, nimmt der
+   Text fast denselben Platz ein, dadurch springt das Layout nicht. */
+@font-face {
+  font-family: 'Inter Fallback';
+  src: local('Arial');
+  size-adjust: 107%;
+  ascent-override: 90%;
+  descent-override: 22.5%;
+  line-gap-override: 0%;
+}
+
 @theme {
-  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Inter Variable', 'Inter Fallback', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   /* Grün = Sparen / Energie (Hauptfarbe). Alle Töne ab 700 haben auf Weiß
      mindestens 4,5:1 Kontrast (WCAG AA). */
