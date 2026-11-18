@@ -1,0 +1,70 @@
+---
+/**
+ * Grundgerüst jeder Seite: SEO-Angaben im <head>, Kopfzeile, Fußzeile.
+ * Jede Seite übergibt einen eigenen title und eine eigene description.
+ */
+import '@/styles/global.css';
+import SiteHeader from '@/components/SiteHeader.astro';
+import SiteFooter from '@/components/SiteFooter.astro';
+import { SITE } from '@/config/site';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Strukturierte Daten (JSON-LD) für Google, optional */
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  /** true = Seite nicht in Google aufnehmen (z. B. Impressum) */
+  noindex?: boolean;
+}
+
+const { title, description, jsonLd, noindex = false } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const fullTitle = Astro.url.pathname === '/' ? `${SITE.name} – ${SITE.claim}` : `${title} | ${SITE.name}`;
+---
+
+<!doctype html>
+<html lang={SITE.lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#047857" />
+
+    <!-- Open Graph (Vorschau beim Teilen in WhatsApp, Facebook usw.) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content={SITE.locale} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+
+    {
+      SITE.cloudflareAnalyticsToken && (
+        <script
+          defer
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon={JSON.stringify({ token: SITE.cloudflareAnalyticsToken })}
+        />
+      )
+    }
+  </head>
+  <body class="flex min-h-screen flex-col">
+    <a
+      href="#inhalt"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:shadow"
+    >
+      Zum Inhalt springen
+    </a>
+    <SiteHeader />
+    <main id="inhalt" class="flex-1">
+      <slot />
+    </main>
+    <SiteFooter />
+  </body>
+</html>

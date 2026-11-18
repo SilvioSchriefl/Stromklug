@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# TODO [DOMAIN]: Domain anpassen
+Sitemap: https://stromklug.example/sitemap-index.xml

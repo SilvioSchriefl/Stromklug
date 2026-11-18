@@ -1,0 +1,28 @@
+---
+import { SITE, NAV_LINKS } from '@/config/site';
+---
+
+<header class="border-b border-line bg-white">
+  <div class="container-page flex items-center justify-between gap-4 py-3">
+    <a href="/" class="flex items-center gap-2 text-lg font-bold text-ink" aria-label={`${SITE.name} – zur Startseite`}>
+      <svg aria-hidden="true" width="28" height="28" viewBox="0 0 32 32">
+        <rect width="32" height="32" rx="8" fill="#047857"></rect>
+        <path d="M18 4 8 18h7l-2 10 11-15h-7l1-9z" fill="#fff"></path>
+      </svg>
+      <span>{SITE.name}</span>
+    </a>
+    <nav aria-label="Hauptmenü">
+      <ul class="flex items-center gap-1 text-sm font-medium sm:gap-4 sm:text-base">
+        {
+          NAV_LINKS.map((link) => (
+            <li>
+              <a href={link.href} class="block rounded-md px-2 py-2 whitespace-nowrap text-ink-soft hover:bg-surface hover:text-ink">
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</header>
