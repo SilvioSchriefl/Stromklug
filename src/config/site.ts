@@ -65,10 +65,12 @@ export const CALCULATORS: CalculatorEntry[] = [
 export const NAV_LINKS = [
   { href: '/', label: 'Start', mobil: false },
   { href: '/#rechner', label: 'Rechner', mobil: true },
-  { href: '/ueber-uns/', label: 'Über uns', mobil: true },
+  { href: '/ratgeber/', label: 'Ratgeber', mobil: true },
+  { href: '/ueber-uns/', label: 'Über uns', mobil: false }, // steht auch im Footer
 ];
 
 export const FOOTER_LINKS = [
+  { href: '/ratgeber/', label: 'Ratgeber' },
   { href: '/ueber-uns/', label: 'Über uns' },
   { href: '/kontakt/', label: 'Kontakt' },
   { href: '/affiliate-hinweis/', label: 'Affiliate-Hinweis' },
