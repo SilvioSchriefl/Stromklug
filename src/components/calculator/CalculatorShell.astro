@@ -1,0 +1,68 @@
+---
+/**
+ * Rahmen für jeden Rechner:
+ * - Ergebnis groß oben (Slot "result")
+ * - Eingabefelder darunter (Standard-Slot), optional "Weitere Annahmen" (Slot "advanced")
+ * - Hinweis "Schätzung, keine Beratung"
+ * - Mobile Ergebnisleiste unten (Slot "sticky")
+ */
+interface Props {
+  id: string;
+  /** Überschrift für den Eingabebereich */
+  inputsTitle?: string;
+}
+const { id, inputsTitle = 'Deine Angaben' } = Astro.props;
+const hasAdvanced = Astro.slots.has('advanced');
+---
+
+<form id={id} class="calculator rounded-2xl border border-line bg-white shadow-sm" novalidate>
+  <section
+    data-result-panel
+    aria-label="Ergebnis"
+    class="rounded-t-2xl border-b border-brand-200 bg-brand-50 p-5 transition-opacity data-[stale]:opacity-50 sm:p-6"
+  >
+    <slot name="result" />
+    <ul data-hints class="mt-4 space-y-2 border-l-4 border-amber-500 bg-amber-50 py-2 pr-3 pl-4 text-sm text-ink" hidden></ul>
+  </section>
+
+  <p data-status class="sr-only" role="status" aria-live="polite"></p>
+
+  <fieldset class="p-5 sm:p-6">
+    <legend class="sr-only">{inputsTitle}</legend>
+    <h2 class="text-lg font-bold text-ink">{inputsTitle}</h2>
+    <div class="mt-4 grid gap-5 sm:grid-cols-2">
+      <slot />
+    </div>
+
+    {
+      hasAdvanced && (
+        <details class="mt-6 rounded-lg border border-line bg-surface">
+          <summary class="cursor-pointer px-4 py-3 font-semibold text-ink">Weitere Annahmen (optional)</summary>
+          <div class="grid gap-5 px-4 pt-1 pb-4 sm:grid-cols-2">
+            <slot name="advanced" />
+          </div>
+        </details>
+      )
+    }
+
+    <div class="mt-6 flex flex-wrap items-center gap-4">
+      <button type="reset" class="rounded-lg border border-line px-4 py-2 font-medium text-ink-soft hover:bg-surface hover:text-ink">
+        Standardwerte wiederherstellen
+      </button>
+    </div>
+  </fieldset>
+
+  <p class="rounded-b-2xl border-t border-line bg-surface px-5 py-3 text-sm text-ink-soft sm:px-6">
+    <strong class="font-semibold text-ink">Hinweis:</strong> Das Ergebnis ist eine Schätzung auf Basis deiner Angaben und
+    der unten genannten Annahmen. Es ersetzt keine individuelle Beratung.
+  </p>
+
+  <div
+    data-sticky
+    data-visible="false"
+    aria-hidden="true"
+    class="fixed inset-x-0 bottom-0 z-40 translate-y-full border-t border-brand-200 bg-brand-50/95 px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] backdrop-blur transition-transform data-[visible=true]:translate-y-0 sm:hidden"
+  >
+    <slot name="sticky" />
+  </div>
+</form>

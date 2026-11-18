@@ -33,7 +33,7 @@ export const CALCULATORS: CalculatorEntry[] = [
     slug: 'balkonkraftwerk-rechner',
     title: 'Balkonkraftwerk-Rechner',
     teaser: 'Wie viel Strom erzeugt dein Balkonkraftwerk und wann hat es sich bezahlt gemacht?',
-    status: 'bald',
+    status: 'live',
   },
   {
     slug: 'stromkosten-rechner',

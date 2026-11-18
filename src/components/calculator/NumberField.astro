@@ -1,0 +1,46 @@
+---
+/**
+ * Zahlenfeld für Rechner. Akzeptiert "0,35" und "0.35".
+ * min/max werden im Browser geprüft; Fehlermeldung erscheint direkt unter dem Feld.
+ */
+import { formatNumber } from '@/lib/format';
+
+interface Props {
+  name: string;
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  unit?: string;
+  hint?: string;
+  /** Nachkommastellen für die Anzeige des Startwerts */
+  decimals?: number;
+  formId: string;
+}
+
+const { name, label, value, min, max, unit, hint, decimals = 0, formId } = Astro.props;
+const id = `${formId}-${name}`;
+const describedBy = [hint ? `${id}-hint` : '', `${id}-error`].filter(Boolean).join(' ');
+const display = formatNumber(value, decimals).replace(/\./g, '');
+---
+
+<div class="field">
+  <label for={id} class="block font-semibold text-ink">{label}</label>
+  {hint && <p id={`${id}-hint`} class="mt-1 text-sm text-ink-soft">{hint}</p>}
+  <div class="mt-2 flex items-stretch overflow-hidden rounded-lg border border-line bg-white focus-within:border-sea-600 focus-within:ring-2 focus-within:ring-sea-600/30">
+    <input
+      id={id}
+      name={name}
+      type="text"
+      inputmode="decimal"
+      autocomplete="off"
+      value={display}
+      data-min={min}
+      data-max={max}
+      aria-describedby={describedBy}
+      class="w-full min-w-0 bg-transparent px-3 py-3 text-lg text-ink outline-none aria-[invalid=true]:bg-red-50"
+    />
+    {unit && <span class="flex items-center border-l border-line bg-surface px-3 text-ink-soft">{unit}</span>}
+  </div>
+  <p id={`${id}-error`} class="mt-1 text-sm font-medium text-red-700" hidden></p>
+</div>

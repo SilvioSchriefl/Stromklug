@@ -1,0 +1,17 @@
+---
+/** Hauptergebnis: großer Wert + Erklärsatz. Texte werden im Browser über data-out aktualisiert. */
+interface Props {
+  label: string;
+  valueKey: string;
+  value: string;
+  sentenceKey: string;
+  sentence: string;
+}
+const { label, valueKey, value, sentenceKey, sentence } = Astro.props;
+---
+
+<div>
+  <p class="text-sm font-semibold tracking-wide text-brand-800 uppercase">{label}</p>
+  <p class="mt-1 text-4xl font-extrabold tracking-tight text-ink sm:text-5xl" data-out={valueKey}>{value}</p>
+  <p class="mt-3 max-w-prose text-base text-ink-soft" data-out={sentenceKey}>{sentence}</p>
+</div>

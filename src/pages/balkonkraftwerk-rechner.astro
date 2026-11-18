@@ -1,0 +1,395 @@
+---
+import CalculatorLayout from '@/layouts/CalculatorLayout.astro';
+import CalculatorShell from '@/components/calculator/CalculatorShell.astro';
+import NumberField from '@/components/calculator/NumberField.astro';
+import SelectField from '@/components/calculator/SelectField.astro';
+import ResultMain from '@/components/calculator/ResultMain.astro';
+import ResultTiles from '@/components/calculator/ResultTiles.astro';
+import SourcesTable from '@/components/SourcesTable.astro';
+import pvgis from '@/data/pvgis-deutschland.json';
+import {
+  AUSRICHTUNGEN,
+  NEIGUNGEN,
+  VERSCHATTUNG,
+  berechneBalkonkraftwerk,
+  spezifischerErtrag,
+  type BalkonkraftwerkEingabe,
+} from '@/lib/calculators/balkonkraftwerk';
+import { ausgabeBalkonkraftwerk, formatAmortisation } from '@/lib/calculators/balkonkraftwerk-ausgabe';
+import {
+  BKW_ANSCHAFFUNG,
+  BKW_EIGENVERBRAUCH,
+  BKW_EINSPEISEVERGUETUNG,
+  BKW_MODULLEISTUNG,
+  BKW_MODULLEISTUNG_MAX,
+  BKW_WECHSELRICHTER,
+  PV_ALTERUNG,
+  STROMPREIS,
+  STROMPREIS_STEIGERUNG,
+  formatStand,
+} from '@/data/standardwerte';
+import { formatEuro, formatNumber } from '@/lib/format';
+
+const FORM_ID = 'bkw';
+
+const standard: BalkonkraftwerkEingabe = {
+  modulleistungWp: BKW_MODULLEISTUNG.wert,
+  wechselrichterW: BKW_WECHSELRICHTER.wert,
+  ausrichtung: 'sued',
+  // Standard: senkrecht am Balkongeländer – der häufigste Fall, nicht der optimale
+  neigung: 90,
+  verschattung: 'keine',
+  eigenverbrauchProzent: BKW_EIGENVERBRAUCH.wert,
+  strompreisCt: STROMPREIS.wert,
+  anschaffungEuro: BKW_ANSCHAFFUNG.wert,
+  strompreisSteigerungProzent: STROMPREIS_STEIGERUNG.wert,
+  alterungProzent: PV_ALTERUNG.wert,
+};
+const ergebnis = berechneBalkonkraftwerk(standard);
+const aus = ausgabeBalkonkraftwerk(ergebnis, standard);
+
+// Beispielwerte für Texte – direkt aus der Rechenlogik, damit Text und Rechner nie auseinanderlaufen
+const kwh = (r: { jahresertragKwh: number }) => formatNumber(Math.round(r.jahresertragKwh / 10) * 10);
+const sued30 = berechneBalkonkraftwerk({ ...standard, neigung: 30 });
+const senkrechtOst = berechneBalkonkraftwerk({ ...standard, neigung: 90, ausrichtung: 'ost' });
+const maxModule30 = berechneBalkonkraftwerk({ ...standard, neigung: 30, modulleistungWp: 2000 });
+const ostAnteil = Math.round((spezifischerErtrag('ost', 30) / spezifischerErtrag('sued', 30)) * 100);
+
+const ausrichtungOptionen = Object.entries(AUSRICHTUNGEN).map(([value, label]) => ({ value, label }));
+const neigungLabels: Record<number, string> = {
+  0: '0° – flach liegend',
+  15: '15°',
+  30: '30° – optimal',
+  45: '45°',
+  60: '60°',
+  90: '90° – senkrecht',
+};
+const neigungOptionen = NEIGUNGEN.map((n) => ({ value: String(n), label: neigungLabels[n] }));
+const schattenOptionen = Object.entries(VERSCHATTUNG).map(([value, v]) => ({ value, label: v.label }));
+
+// Tabelle "Ertrag nach Ausrichtung und Neigung"
+const tabellenZeilen: { label: string; key: keyof typeof pvgis.ertrag }[] = [
+  { label: 'Süd', key: 'sued' },
+  { label: 'Südost / Südwest', key: 'suedost' },
+  { label: 'Ost / West', key: 'ost' },
+  { label: 'Nordost / Nordwest', key: 'nordost' },
+  { label: 'Nord', key: 'nord' },
+];
+const tabellenNeigungen = [15, 30, 45, 60, 90] as const;
+
+const faq = [
+  {
+    frage: 'Wie viel Strom erzeugt ein 800-Watt-Balkonkraftwerk im Jahr?',
+    antwort: `Das hängt vor allem von Ausrichtung und Neigung ab. Mit ${formatNumber(standard.modulleistungWp)} Wp Modulleistung, 800 W Wechselrichter und ohne Schatten sind es in der Mitte Deutschlands etwa ${kwh(sued30)} kWh pro Jahr bei 30° Neigung nach Süden, rund ${kwh(ergebnis)} kWh senkrecht am Südbalkon und rund ${kwh(senkrechtOst)} kWh senkrecht nach Osten. Grundlage sind Daten des EU-Solarrechners PVGIS.`,
+  },
+  {
+    frage: 'Darf ich mehr als 800 Watt Module anschließen?',
+    antwort:
+      'Ja. Erlaubt sind bis zu 2.000 Wp Modulleistung, der Wechselrichter darf aber höchstens 800 W ins Hausnetz abgeben. Mehr Module bringen vor allem morgens, abends und bei bewölktem Himmel mehr Strom. An sonnigen Mittagen kappt der Wechselrichter dagegen einen Teil.',
+  },
+  {
+    frage: 'Bekomme ich Geld für den Strom, den ich ins Netz einspeise?',
+    antwort:
+      'Nein. Laut Umweltbundesamt erhalten Steckersolargeräte keine Einspeisevergütung. Wirtschaftlich zählt deshalb nur der Strom, den du selbst verbrauchst. Unser Rechner bewertet eingespeisten Strom mit 0 Cent.',
+  },
+  {
+    frage: 'Muss ich mein Balkonkraftwerk anmelden?',
+    antwort:
+      'Ja, aber nur im Marktstammdatenregister der Bundesnetzagentur. Das geht online und dauert wenige Minuten. Eine zusätzliche Anmeldung beim Netzbetreiber ist laut Umweltbundesamt nicht mehr nötig.',
+  },
+  {
+    frage: 'Lohnt sich ein Balkonkraftwerk auch auf einem Ost- oder Westbalkon?',
+    antwort: `Meist ja. Bei 30° Neigung erzeugen Module nach Osten oder Westen etwa ${ostAnteil} % des Ertrags einer Südausrichtung. Dafür liefern sie Strom morgens oder abends, wenn viele Haushalte mehr verbrauchen – der Eigenverbrauchsanteil kann dadurch höher sein. Ungeeignet sind laut Verbraucherzentrale Flächen zwischen Nordost und Nordwest.`,
+  },
+  {
+    frage: 'Warum weicht mein tatsächlicher Ertrag vom Rechner ab?',
+    antwort:
+      'Der Rechner nutzt langjährige Durchschnittswerte für die Mitte Deutschlands. Im Norden ist der Ertrag etwas niedriger (Hamburg rund 980 kWh pro kWp), im Süden höher (München rund 1.130 kWh pro kWp, jeweils Süd 30°). Dazu kommen schwankendes Wetter von Jahr zu Jahr, Schatten von Bäumen oder Nachbargebäuden und Verschmutzung der Module.',
+  },
+];
+---
+
+<CalculatorLayout
+  title="Balkonkraftwerk-Rechner: Ertrag & Amortisation berechnen"
+  description="Berechne Jahresertrag, Ersparnis und Amortisationszeit deines Balkonkraftwerks – mit PVGIS-Daten für Deutschland, 800-W-Grenze und aktuellem Strompreis."
+  h1="Balkonkraftwerk-Rechner: Ertrag und Amortisation"
+  intro="Gib ein, wie deine Module ausgerichtet sind und was die Anlage kostet. Der Rechner zeigt dir sofort, wie viel Strom sie erzeugt, wie viel Geld du sparst und wann sie sich bezahlt gemacht hat."
+  slug="balkonkraftwerk-rechner"
+  faq={faq}
+  related={['balkonkraftwerk-speicher-rechner', 'stromkosten-rechner', 'stromanbieter-wechsel-rechner']}
+>
+  <CalculatorShell id={FORM_ID}>
+    <Fragment slot="result">
+      <ResultMain label="Amortisationszeit" valueKey="amortisation" value={aus.amortisation} sentenceKey="satz" sentence={aus.satz} />
+      <ResultTiles
+        tiles={[
+          { label: 'Jahresertrag', key: 'jahresertrag', value: aus.jahresertrag, subKey: 'eigenverbrauch', sub: aus.eigenverbrauch },
+          { label: 'Ersparnis pro Jahr', key: 'ersparnisJahr', value: aus.ersparnisJahr, subKey: 'strompreis', sub: aus.strompreis },
+          { label: 'Ersparnis über 20 Jahre', key: 'ersparnis20', value: aus.ersparnis20, subKey: 'gewinn20', sub: aus.gewinn20 },
+        ]}
+      />
+    </Fragment>
+
+    <NumberField
+      formId={FORM_ID}
+      name="modulleistung"
+      label="Modulleistung"
+      unit="Wp"
+      value={standard.modulleistungWp}
+      min={50}
+      max={4000}
+      hint="Summe aller Module, steht im Datenblatt (z. B. 2 × 450 Wp = 900 Wp). Erlaubt sind bis 2.000 Wp."
+    />
+    <NumberField
+      formId={FORM_ID}
+      name="wechselrichter"
+      label="Wechselrichter-Leistung"
+      unit="W"
+      value={standard.wechselrichterW}
+      min={100}
+      max={2000}
+      hint="Höchstens 800 W erlaubt."
+    />
+    <SelectField formId={FORM_ID} name="ausrichtung" label="Ausrichtung der Module" value="sued" options={ausrichtungOptionen} />
+    <SelectField
+      formId={FORM_ID}
+      name="neigung"
+      label="Neigung der Module"
+      hint="Am Balkongeländer meist senkrecht (90°), aufgeständert im Garten oder auf dem Flachdach oft 30°."
+      value={String(standard.neigung)}
+      options={neigungOptionen}
+    />
+    <SelectField
+      formId={FORM_ID}
+      name="verschattung"
+      label="Verschattung"
+      value="keine"
+      options={schattenOptionen}
+      hint="Bäume, Nachbarhäuser oder Balkonwände, die Schatten werfen."
+    />
+    <NumberField
+      formId={FORM_ID}
+      name="eigenverbrauch"
+      label="Eigenverbrauchsanteil"
+      unit="%"
+      value={standard.eigenverbrauchProzent}
+      min={0}
+      max={100}
+      hint="Wie viel vom erzeugten Strom du direkt selbst verbrauchst. Grobe Faustwerte: 1 Modul ca. 70 %, 2 Module ca. 50 %, 4 Module eher 30–40 %."
+    />
+    <NumberField
+      formId={FORM_ID}
+      name="strompreis"
+      label="Strompreis"
+      unit="ct/kWh"
+      value={standard.strompreisCt}
+      decimals={1}
+      min={1}
+      max={150}
+      hint={`Am genauesten: der Arbeitspreis von deiner Stromrechnung. Standard: Durchschnitt laut BDEW (${formatStand(STROMPREIS.stand)}).`}
+    />
+    <NumberField
+      formId={FORM_ID}
+      name="anschaffung"
+      label="Anschaffungskosten"
+      unit="€"
+      value={standard.anschaffungEuro}
+      min={0}
+      max={10000}
+      hint="Set inklusive Halterung und Versand."
+    />
+
+    <Fragment slot="advanced">
+      <NumberField
+        formId={FORM_ID}
+        name="steigerung"
+        label="Strompreisänderung pro Jahr"
+        unit="%"
+        value={standard.strompreisSteigerungProzent ?? 0}
+        decimals={1}
+        min={-10}
+        max={15}
+        hint="0 % = gleichbleibender Preis. Negative Werte für sinkende Preise."
+      />
+      <NumberField
+        formId={FORM_ID}
+        name="alterung"
+        label="Leistungsverlust der Module pro Jahr"
+        unit="%"
+        value={standard.alterungProzent ?? 0.5}
+        decimals={1}
+        min={0}
+        max={5}
+      />
+    </Fragment>
+
+    <p slot="sticky" class="flex items-baseline justify-between gap-3 text-sm">
+      <span class="text-ink-soft">Amortisation · Ersparnis</span>
+      <strong class="text-base text-ink" data-out="sticky">{aus.sticky}</strong>
+    </p>
+  </CalculatorShell>
+
+  <article class="prose-page mt-12">
+    <h2>So rechnen wir</h2>
+    <p>Der Rechner arbeitet in sechs Schritten. Alle Zwischenwerte stammen aus offenen Quellen.</p>
+    <ol>
+      <li>
+        <strong>Ertrag pro kWp:</strong> Aus dem EU-Solarrechner{' '}
+        <a href={pvgis.quelleUrl} rel="noopener">PVGIS</a> nehmen wir den langjährigen Jahresertrag für deine Ausrichtung und
+        Neigung (Wetterdaten {pvgis.wetterdaten.year_min}–{pvgis.wetterdaten.year_max}, Standort Mitte Deutschlands, {pvgis.systemverlusteProzent} %
+        Systemverluste für Kabel, Wechselrichter und Verschmutzung).
+      </li>
+      <li><strong>Modulleistung:</strong> Ertrag pro kWp × Modulleistung in kWp.</li>
+      <li>
+        <strong>Wechselrichter-Grenze:</strong> Liefern die Module mehr, als der Wechselrichter abgeben darf, geht die Spitze
+        verloren. Wie viel, haben wir mit PVGIS-Stundenwerten für jede Ausrichtung berechnet.
+      </li>
+      <li><strong>Verschattung:</strong> pauschaler Abschlag – leicht 10 %, mittel 25 %, stark 50 % (eigene Annahme).</li>
+      <li>
+        <strong>Ersparnis:</strong> Jahresertrag × Eigenverbrauchsanteil × Strompreis. Eingespeister Strom bringt kein Geld.
+      </li>
+      <li>
+        <strong>Amortisation:</strong> Wir addieren die Ersparnis Jahr für Jahr – mit {formatNumber(PV_ALTERUNG.wert, 1)} %
+        Leistungsverlust der Module pro Jahr – bis die Anschaffungskosten erreicht sind.
+      </li>
+    </ol>
+    <p class="rounded-lg bg-surface p-4 font-mono text-sm text-ink">
+      Jahresertrag = kWp × Ertrag pro kWp × Begrenzungsfaktor × Verschattungsfaktor<br />
+      Ersparnis pro Jahr = Jahresertrag × Eigenverbrauchsanteil × Strompreis
+    </p>
+
+    <h3>Standardwerte und Quellen</h3>
+    <p>Alle Werte kannst du im Rechner ändern.</p>
+  </article>
+  <SourcesTable
+    rows={[
+      { name: 'Strompreis', wert: STROMPREIS, decimals: 1 },
+      { name: 'Modulleistung', wert: BKW_MODULLEISTUNG },
+      { name: 'Wechselrichter', wert: BKW_WECHSELRICHTER },
+      { name: 'Max. Modulleistung', wert: BKW_MODULLEISTUNG_MAX },
+      { name: 'Anschaffungskosten', wert: BKW_ANSCHAFFUNG },
+      { name: 'Eigenverbrauchsanteil', wert: BKW_EIGENVERBRAUCH },
+      { name: 'Einspeisevergütung', wert: BKW_EINSPEISEVERGUETUNG },
+      { name: 'Modulalterung', wert: PV_ALTERUNG, decimals: 1 },
+      { name: 'Strompreisänderung', wert: STROMPREIS_STEIGERUNG },
+    ]}
+  />
+
+  <article class="prose-page mt-10">
+    <h3>Ertrag nach Ausrichtung und Neigung</h3>
+    <p>
+      Jahresertrag in kWh pro 1.000 Wp (1 kWp) Modulleistung, ohne Schatten und ohne Wechselrichter-Grenze. Quelle: PVGIS,
+      Mitte Deutschlands, abgerufen {formatStand(pvgis.abgerufen)}. Flach liegende Module (0°): {formatNumber(spezifischerErtrag('sued', 0))} kWh.
+    </p>
+  </article>
+  <div class="mt-4 overflow-x-auto rounded-xl border border-line">
+    <table class="w-full min-w-[32rem] text-right text-sm">
+      <caption class="sr-only">Jahresertrag in kWh pro kWp nach Ausrichtung und Neigung</caption>
+      <thead class="bg-surface text-ink">
+        <tr>
+          <th scope="col" class="px-4 py-3 text-left font-semibold">Ausrichtung</th>
+          {tabellenNeigungen.map((n) => <th scope="col" class="px-4 py-3 font-semibold">{n}°</th>)}
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-line text-ink-soft">
+        {
+          tabellenZeilen.map((z) => (
+            <tr>
+              <th scope="row" class="px-4 py-3 text-left font-medium text-ink">
+                {z.label}
+              </th>
+              {tabellenNeigungen.map((n) => (
+                <td class="px-4 py-3 tabular-nums">{formatNumber(spezifischerErtrag(z.key, n))}</td>
+              ))}
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <article class="prose-page mt-10">
+    <h2>Rechenbeispiel</h2>
+    <p>
+      Ein Set mit {formatNumber(standard.modulleistungWp)} Wp und 800-W-Wechselrichter hängt senkrecht am Südbalkon, ohne Schatten. Es
+      kostet {formatEuro(standard.anschaffungEuro)}, der Strompreis liegt bei {formatNumber(standard.strompreisCt, 1)} ct/kWh, die
+      Hälfte des Stroms wird selbst verbraucht.
+    </p>
+    <ul>
+      <li>
+        Jahresertrag: {formatNumber(standard.modulleistungWp / 1000, 1)} kWp × {formatNumber(ergebnis.spezifischerErtragKwhProKwp)} kWh/kWp
+        × {formatNumber(ergebnis.begrenzungsFaktor * 100, 1)} % (Wechselrichter-Grenze) ≈ <strong>{aus.jahresertrag}</strong>
+      </li>
+      <li>Selbst genutzt: {formatNumber(standard.eigenverbrauchProzent)} % ≈ {formatNumber(Math.round(ergebnis.eigenverbrauchKwh))} kWh</li>
+      <li>
+        Ersparnis im ersten Jahr: {formatNumber(Math.round(ergebnis.eigenverbrauchKwh))} kWh × {formatNumber(standard.strompreisCt / 100, 3)} €
+        ≈ <strong>{aus.ersparnisJahr}</strong>
+      </li>
+      <li>Amortisation: nach etwa <strong>{formatAmortisation(ergebnis.amortisationJahre)}</strong></li>
+      <li>
+        Ersparnis über 20 Jahre (mit Modulalterung): <strong>{aus.ersparnis20}</strong>, nach Abzug der Anschaffung
+        {formatEuro(ergebnis.gewinn20JahreEuro)}
+      </li>
+    </ul>
+    <p>
+      Werden dieselben Module mit 30° Neigung nach Süden aufgestellt (z. B. im Garten oder auf dem Flachdach), steigt der Ertrag
+      auf rund {kwh(sued30)} kWh und die Amortisation verkürzt sich auf {formatAmortisation(sued30.amortisationJahre)}.
+    </p>
+
+    <h2>Typische Fehler bei der Berechnung</h2>
+    <ul>
+      <li>
+        <strong>Eigenverbrauch zu hoch angesetzt:</strong> Wer tagsüber nicht zu Hause ist, verbraucht oft weniger als die Hälfte
+        selbst. Den Rest verschenkst du ans Netz – das verlängert die Amortisation deutlich.
+      </li>
+      <li>
+        <strong>Durchschnittspreis statt Arbeitspreis:</strong> Der Durchschnittspreis enthält einen Anteil der Grundgebühr. Die
+        zahlst du aber weiter, egal wie viel Strom du selbst erzeugst. Genauer rechnest du mit dem Arbeitspreis pro kWh aus
+        deinem Vertrag.
+      </li>
+      <li>
+        <strong>Schatten unterschätzt:</strong> Laut Verbraucherzentrale kann schon wenig Schatten auf einem Modul die Leistung um
+        mehr als die Hälfte senken. Prüfe den Platz zu verschiedenen Tageszeiten.
+      </li>
+      <li>
+        <strong>Mehr Module = proportional mehr Ertrag:</strong> Der Wechselrichter begrenzt auf 800 W. Mit 2.000 Wp statt
+        {formatNumber(standard.modulleistungWp)} Wp steigt der Ertrag bei Süd 30° nur von rund {kwh(sued30)} auf {kwh(maxModule30)} kWh,
+        weil an sonnigen Mittagen Leistung verloren geht.
+      </li>
+      <li>
+        <strong>Senkrechte Montage wie Dachmontage gerechnet:</strong> Am Balkongeländer (90°) erzeugen Module nach Süden rund
+        {Math.round((spezifischerErtrag('sued', 90) / spezifischerErtrag('sued', 30)) * 100)} % dessen, was sie mit 30° Neigung schaffen würden.
+      </li>
+    </ul>
+  </article>
+</CalculatorLayout>
+
+<script>
+  import { setupCalculator } from '@/lib/ui/calculator';
+  import {
+    berechneBalkonkraftwerk,
+    type Ausrichtung,
+    type Neigung,
+    type Verschattung,
+  } from '@/lib/calculators/balkonkraftwerk';
+  import { ausgabeBalkonkraftwerk, ansageBalkonkraftwerk } from '@/lib/calculators/balkonkraftwerk-ausgabe';
+
+  setupCalculator('bkw', {
+    read: (f) => ({
+      modulleistungWp: f.number('modulleistung'),
+      wechselrichterW: f.number('wechselrichter'),
+      ausrichtung: f.select<Ausrichtung>('ausrichtung'),
+      neigung: Number(f.select('neigung')) as Neigung,
+      verschattung: f.select<Verschattung>('verschattung'),
+      eigenverbrauchProzent: f.number('eigenverbrauch'),
+      strompreisCt: f.number('strompreis'),
+      anschaffungEuro: f.number('anschaffung'),
+      strompreisSteigerungProzent: f.number('steigerung'),
+      alterungProzent: f.number('alterung'),
+    }),
+    compute: berechneBalkonkraftwerk,
+    outputs: ausgabeBalkonkraftwerk,
+    hints: (r) => r.hinweise,
+    announce: ansageBalkonkraftwerk,
+  });
+</script>

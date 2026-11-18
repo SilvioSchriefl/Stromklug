@@ -1,0 +1,33 @@
+---
+/** Weitere Ergebnisse als kleine Kacheln unter dem Hauptergebnis. */
+interface Tile {
+  label: string;
+  key: string;
+  value: string;
+  /** Optionale zweite Zeile */
+  subKey?: string;
+  sub?: string;
+}
+interface Props {
+  tiles: Tile[];
+}
+const { tiles } = Astro.props;
+---
+
+<dl class="mt-5 grid gap-3 sm:grid-cols-3">
+  {
+    tiles.map((t) => (
+      <div class="rounded-xl bg-white p-4 ring-1 ring-brand-200">
+        <dt class="text-sm text-ink-soft">{t.label}</dt>
+        <dd class="mt-1 text-2xl font-bold text-ink" data-out={t.key}>
+          {t.value}
+        </dd>
+        {t.subKey && (
+          <dd class="mt-1 text-sm text-ink-soft" data-out={t.subKey}>
+            {t.sub}
+          </dd>
+        )}
+      </div>
+    ))
+  }
+</dl>

@@ -1,0 +1,47 @@
+---
+/** Tabelle der Standardwerte mit Quelle und Stand – Grundlage für Vertrauen und Transparenz. */
+import { formatStand, type Standardwert } from '@/data/standardwerte';
+import { formatNumber } from '@/lib/format';
+
+interface Props {
+  rows: { name: string; wert: Standardwert; decimals?: number }[];
+}
+const { rows } = Astro.props;
+---
+
+<div class="mt-4 overflow-x-auto rounded-xl border border-line">
+  <table class="w-full min-w-[36rem] text-left text-sm">
+    <caption class="sr-only">Standardwerte mit Quelle und Stand</caption>
+    <thead class="bg-surface text-ink">
+      <tr>
+        <th scope="col" class="px-4 py-3 font-semibold">Wert</th>
+        <th scope="col" class="px-4 py-3 font-semibold">Standard</th>
+        <th scope="col" class="px-4 py-3 font-semibold">Quelle</th>
+        <th scope="col" class="px-4 py-3 font-semibold">Stand</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-line text-ink-soft">
+      {
+        rows.map((row) => (
+          <tr>
+            <th scope="row" class="px-4 py-3 font-medium text-ink">{row.name}</th>
+            <td class="px-4 py-3 whitespace-nowrap">
+              {formatNumber(row.wert.wert, row.decimals ?? 0)} {row.wert.einheit}
+            </td>
+            <td class="px-4 py-3">
+              {row.wert.annahme && <span class="font-medium text-ink">Annahme: </span>}
+              {row.wert.url ? (
+                <a href={row.wert.url} class="text-sea-700 underline underline-offset-2 hover:text-sea-900" rel="noopener">
+                  {row.wert.quelle}
+                </a>
+              ) : (
+                row.wert.quelle
+              )}
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap">{formatStand(row.wert.stand)}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>
