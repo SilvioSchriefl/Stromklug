@@ -321,7 +321,7 @@ const faq = [
       </li>
       <li>Amortisation: nach etwa <strong>{formatAmortisation(ergebnis.amortisationJahre)}</strong></li>
       <li>
-        Ersparnis über 20 Jahre (mit Modulalterung): <strong>{aus.ersparnis20}</strong>, nach Abzug der Anschaffung
+        Ersparnis über 20 Jahre (mit Modulalterung): <strong>{aus.ersparnis20}</strong>, nach Abzug der Anschaffung{' '}
         {formatEuro(ergebnis.gewinn20JahreEuro)}
       </li>
     </ul>
@@ -346,12 +346,12 @@ const faq = [
         mehr als die Hälfte senken. Prüfe den Platz zu verschiedenen Tageszeiten.
       </li>
       <li>
-        <strong>Mehr Module = proportional mehr Ertrag:</strong> Der Wechselrichter begrenzt auf 800 W. Mit 2.000 Wp statt
+        <strong>Mehr Module = proportional mehr Ertrag:</strong> Der Wechselrichter begrenzt auf 800 W. Mit 2.000 Wp statt{' '}
         {formatNumber(standard.modulleistungWp)} Wp steigt der Ertrag bei Süd 30° nur von rund {kwh(sued30)} auf {kwh(maxModule30)} kWh,
         weil an sonnigen Mittagen Leistung verloren geht.
       </li>
       <li>
-        <strong>Senkrechte Montage wie Dachmontage gerechnet:</strong> Am Balkongeländer (90°) erzeugen Module nach Süden rund
+        <strong>Senkrechte Montage wie Dachmontage gerechnet:</strong> Am Balkongeländer (90°) erzeugen Module nach Süden rund{' '}
         {Math.round((spezifischerErtrag('sued', 90) / spezifischerErtrag('sued', 30)) * 100)} % dessen, was sie mit 30° Neigung schaffen würden.
       </li>
     </ul>

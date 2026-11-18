@@ -1,0 +1,413 @@
+---
+import CalculatorLayout from '@/layouts/CalculatorLayout.astro';
+import CalculatorShell from '@/components/calculator/CalculatorShell.astro';
+import NumberField from '@/components/calculator/NumberField.astro';
+import SelectField from '@/components/calculator/SelectField.astro';
+import StrompreisField from '@/components/calculator/StrompreisField.astro';
+import ResultMain from '@/components/calculator/ResultMain.astro';
+import ResultTiles from '@/components/calculator/ResultTiles.astro';
+import SourcesTable from '@/components/SourcesTable.astro';
+import AffiliateBox from '@/components/affiliate/AffiliateBox.astro';
+import tagesprofil from '@/data/pvgis-tagesprofil.json';
+import { MONTAGEN, berechneSpeicher, type SpeicherEingabe } from '@/lib/calculators/speicher';
+import { URTEIL_TEXT, ausgabeSpeicher, formatSpeicherAmortisation } from '@/lib/calculators/speicher-ausgabe';
+import { berechneBalkonkraftwerk } from '@/lib/calculators/balkonkraftwerk';
+import {
+  BKW_ANSCHAFFUNG,
+  BKW_EIGENVERBRAUCH,
+  BKW_EINSPEISEVERGUETUNG,
+  BKW_MODULLEISTUNG,
+  BKW_WECHSELRICHTER,
+  HAUSHALT_GRUNDLAST,
+  PV_ALTERUNG,
+  SPEICHER_KAPAZITAET,
+  SPEICHER_LEBENSDAUER,
+  SPEICHER_MEHRKOSTEN,
+  SPEICHER_STANDBY,
+  SPEICHER_WIRKUNGSGRAD,
+  STROMPREIS,
+  formatStand,
+} from '@/data/standardwerte';
+import { formatEuro, formatNumber } from '@/lib/format';
+
+const FORM_ID = 'speicher';
+
+// Jahresertrag aus dem Standardfall des Balkonkraftwerk-Rechners (900 Wp, senkrecht Süd)
+const bkw = berechneBalkonkraftwerk({
+  modulleistungWp: BKW_MODULLEISTUNG.wert,
+  wechselrichterW: BKW_WECHSELRICHTER.wert,
+  ausrichtung: 'sued',
+  neigung: 90,
+  verschattung: 'keine',
+  eigenverbrauchProzent: BKW_EIGENVERBRAUCH.wert,
+  strompreisCt: STROMPREIS.wert,
+  anschaffungEuro: BKW_ANSCHAFFUNG.wert,
+  alterungProzent: PV_ALTERUNG.wert,
+});
+
+const standard: SpeicherEingabe = {
+  jahresertragKwh: Math.round(bkw.jahresertragKwh),
+  montage: 'senkrechtSued',
+  eigenverbrauchOhneProzent: BKW_EIGENVERBRAUCH.wert,
+  kapazitaetKwh: SPEICHER_KAPAZITAET.wert,
+  grundlastW: HAUSHALT_GRUNDLAST.wert,
+  wirkungsgradProzent: SPEICHER_WIRKUNGSGRAD.wert,
+  standbyW: SPEICHER_STANDBY.wert,
+  mehrkostenEuro: SPEICHER_MEHRKOSTEN.wert,
+  strompreisCt: STROMPREIS.wert,
+  lebensdauerJahre: SPEICHER_LEBENSDAUER.wert,
+};
+const ergebnis = berechneSpeicher(standard);
+const aus = ausgabeSpeicher(ergebnis, standard);
+
+// Vergleich verschiedener Speichergrößen (Mehrkosten anteilig angenommen: 375 € pro kWh)
+const groessen = [1, 2, 3, 4].map((kwh) => {
+  const r = berechneSpeicher({ ...standard, kapazitaetKwh: kwh, mehrkostenEuro: (SPEICHER_MEHRKOSTEN.wert / 2) * kwh });
+  return { kwh, r };
+});
+const standbyFrei = berechneSpeicher({ ...standard, standbyW: 0 });
+const grosseAnlage = berechneSpeicher({
+  ...standard,
+  jahresertragKwh: 1300,
+  montage: 'geneigtSued',
+  eigenverbrauchOhneProzent: 35,
+});
+
+// Kennzahlen aus dem PVGIS-Tagesprofil (für Texte)
+const profil = tagesprofil.profile[standard.montage];
+const summeTage = (von: number, bis: number) => profil.anteil.slice(von, bis).reduce((a, b) => a + b, 0);
+const verhaeltnisJuniDezember = summeTage(151, 181) / summeTage(334, 365); // Juni ÷ Dezember
+const dunkleStundenSchnitt = profil.dunkel.reduce((a, b) => a + b, 0) / profil.dunkel.length;
+
+const montageOptionen = Object.entries(MONTAGEN).map(([value, label]) => ({ value, label }));
+const preis = formatNumber(STROMPREIS.wert, 1);
+const standbyKwh = (SPEICHER_STANDBY.wert * 8760) / 1000;
+
+const faq = [
+  {
+    frage: 'Lohnt sich ein Speicher für ein Balkonkraftwerk?',
+    antwort: `Meist nur knapp oder gar nicht. Mit unseren Standardwerten – ${formatNumber(standard.jahresertragKwh)} kWh Ertrag, 2 kWh Speicher für ${formatEuro(SPEICHER_MEHRKOSTEN.wert)} Aufpreis – hat sich der Speicher nach ${formatSpeicherAmortisation(ergebnis.amortisationJahre)} bezahlt gemacht. Das Umweltbundesamt kommt zum Schluss, dass sich ein Batteriespeicher für einen durchschnittlichen Haushalt eher nicht lohnt. Günstiger wird es bei viel Überschuss, hohem Verbrauch abends und nachts und einem niedrigen Speicherpreis.`,
+  },
+  {
+    frage: 'Wie groß sollte der Speicher sein?',
+    antwort: `Entscheidend ist, wie viel Strom du abends und nachts brauchst. Bei ${formatNumber(HAUSHALT_GRUNDLAST.wert)} W und im Jahresschnitt rund ${formatNumber(dunkleStundenSchnitt)} Stunden ohne Solarstrom sind das etwa ${formatNumber((HAUSHALT_GRUNDLAST.wert * dunkleStundenSchnitt) / 1000, 1)} kWh pro Nacht. Ein deutlich größerer Speicher wird dann selten leer und bringt kaum mehr Ersparnis – die Tabelle „Speichergröße im Vergleich“ auf dieser Seite zeigt das.`,
+  },
+  {
+    frage: 'Was kostet ein Speicher fürs Balkonkraftwerk?',
+    antwort:
+      'Die Verbraucherzentrale nennt einen Aufpreis von etwa 500 bis 1.000 Euro gegenüber einem Balkonkraftwerk ohne Speicher (Stand Juli 2026). Achte beim Vergleich auf die nutzbare Kapazität, nicht auf die Brutto-Kapazität.',
+  },
+  {
+    frage: 'Wie oft wird der Speicher im Jahr voll geladen?',
+    antwort: `In unserem Standardbeispiel rechnerisch rund ${formatNumber(Math.round(ergebnis.vollzyklen))}-mal pro Jahr (Vollzyklen). Im Sommer wird er fast täglich voll, im Winter reicht der Solarstrom oft nicht einmal für den eigenen Tagesverbrauch – dann bleibt der Speicher leer.`,
+  },
+  {
+    frage: 'Darf ich mit Speicher mehr als 800 Watt einspeisen?',
+    antwort:
+      'Nein. Auch mit Speicher gilt für Balkonkraftwerke die Grenze von 800 W Wechselrichterleistung ins Hausnetz. Der Speicher verschiebt den Solarstrom nur zeitlich vom Mittag in den Abend.',
+  },
+  {
+    frage: 'Warum ist der Eigenverbrauch des Speichers so wichtig?',
+    antwort: `Ein Speicher braucht selbst Strom für Elektronik und Steuerung – rund um die Uhr. Schon ${formatNumber(SPEICHER_STANDBY.wert)} W ergeben ${formatNumber(standbyKwh, 1)} kWh im Jahr, bei ${preis} ct/kWh etwa ${formatEuro((standbyKwh * STROMPREIS.wert) / 100)}. Ohne diesen Verbrauch würde sich der Speicher im Standardbeispiel nach ${formatSpeicherAmortisation(standbyFrei.amortisationJahre)} statt nach ${formatSpeicherAmortisation(ergebnis.amortisationJahre)} bezahlt machen. Den Wert findest du im Datenblatt.`,
+  },
+];
+---
+
+<CalculatorLayout
+  title="Speicher fürs Balkonkraftwerk: Lohnt sich das? Rechner"
+  description="Rechne nach, ob sich ein Batteriespeicher für dein Balkonkraftwerk lohnt: zusätzlich genutzter Solarstrom, Ersparnis und Amortisation – simuliert mit PVGIS-Tagesdaten."
+  h1="Lohnt sich ein Speicher fürs Balkonkraftwerk?"
+  intro="Ein Speicher hebt Solarstrom vom Mittag für den Abend auf. Ob sich das rechnet, hängt vom Überschuss, deinem Verbrauch nachts und dem Preis des Speichers ab. Der Rechner simuliert ein ganzes Jahr – Tag für Tag."
+  slug="balkonkraftwerk-speicher-rechner"
+  faq={faq}
+  related={['balkonkraftwerk-rechner', 'standby-kosten-rechner', 'stromkosten-rechner']}
+>
+  <CalculatorShell id={FORM_ID}>
+    <Fragment slot="result">
+      <p
+        class="mb-3 inline-block rounded-full bg-white px-3 py-1 text-sm font-bold text-brand-800 ring-1 ring-brand-200"
+        data-out="urteil"
+      >
+        {aus.urteil}
+      </p>
+      <ResultMain label="Amortisation des Speichers" valueKey="amortisation" value={aus.amortisation} sentenceKey="satz" sentence={aus.satz} />
+      <ResultTiles
+        tiles={[
+          { label: 'Zusätzlich genutzter Solarstrom', key: 'netto', value: aus.netto, subKey: 'standby', sub: aus.standby },
+          { label: 'Ersparnis pro Jahr', key: 'ersparnis', value: aus.ersparnis, subKey: 'eigenverbrauch', sub: aus.eigenverbrauch },
+          { label: 'Bilanz über die Lebensdauer', key: 'bilanz', value: aus.bilanz, subKey: 'bilanzSub', sub: aus.bilanzSub },
+        ]}
+      />
+    </Fragment>
+
+    <NumberField
+      formId={FORM_ID}
+      name="ertrag"
+      label="Jahresertrag des Balkonkraftwerks"
+      unit="kWh"
+      value={standard.jahresertragKwh}
+      min={0}
+      max={5000}
+      hint="Kannst du mit unserem Balkonkraftwerk-Rechner ermitteln."
+    />
+    <SelectField formId={FORM_ID} name="montage" label="Wie hängen die Module?" value={standard.montage} options={montageOptionen} />
+    <NumberField
+      formId={FORM_ID}
+      name="eigenverbrauch"
+      label="Eigenverbrauchsanteil ohne Speicher"
+      unit="%"
+      value={standard.eigenverbrauchOhneProzent}
+      min={0}
+      max={100}
+      hint="Wie viel Solarstrom du heute schon direkt verbrauchst."
+    />
+    <NumberField
+      formId={FORM_ID}
+      name="grundlast"
+      label="Verbrauch abends und nachts"
+      unit="W"
+      value={standard.grundlastW}
+      min={0}
+      max={2000}
+      hint="Durchschnitt in den dunklen Stunden. Messen: abends und morgens Zählerstand ablesen, Differenz in Wh ÷ Stunden."
+    />
+    <NumberField
+      formId={FORM_ID}
+      name="kapazitaet"
+      label="Nutzbare Speicherkapazität"
+      unit="kWh"
+      value={standard.kapazitaetKwh}
+      decimals={1}
+      min={0}
+      max={20}
+      hint="Steht im Datenblatt – nicht die Brutto-Kapazität."
+    />
+    <NumberField
+      formId={FORM_ID}
+      name="mehrkosten"
+      label="Mehrkosten für den Speicher"
+      unit="€"
+      value={standard.mehrkostenEuro}
+      min={0}
+      max={10000}
+      hint="Nur der Aufpreis gegenüber dem Balkonkraftwerk ohne Speicher."
+    />
+    <StrompreisField formId={FORM_ID} />
+
+    <Fragment slot="advanced">
+      <NumberField
+        formId={FORM_ID}
+        name="wirkungsgrad"
+        label="Wirkungsgrad (Laden + Entladen)"
+        unit="%"
+        value={standard.wirkungsgradProzent}
+        min={50}
+        max={100}
+      />
+      <NumberField
+        formId={FORM_ID}
+        name="standby"
+        label="Eigenverbrauch des Speichers"
+        unit="W"
+        value={standard.standbyW}
+        decimals={1}
+        min={0}
+        max={50}
+        hint="Dauerhafter Verbrauch laut Datenblatt."
+      />
+      <NumberField
+        formId={FORM_ID}
+        name="lebensdauer"
+        label="Lebensdauer des Speichers"
+        unit="Jahre"
+        value={standard.lebensdauerJahre}
+        min={1}
+        max={30}
+      />
+    </Fragment>
+
+    <p slot="sticky" class="flex items-baseline justify-between gap-3 text-sm">
+      <span class="text-ink-soft">Ergebnis</span>
+      <strong class="text-base text-ink" data-out="sticky">{aus.sticky}</strong>
+    </p>
+  </CalculatorShell>
+
+  <AffiliateBox ids={['bkw-speicher']} titel="Speicher vergleichen" />
+
+  <article class="prose-page mt-12">
+    <h2>So rechnen wir</h2>
+    <p>
+      Wir simulieren ein ganzes Jahr in Tagesschritten. Grundlage ist das Tagesprofil eines Balkonkraftwerks aus dem
+      EU-Solarrechner{' '}
+      <a href={tagesprofil.quelleUrl} rel="noopener">PVGIS</a> (Stundenwerte {tagesprofil.jahre[0]}–{tagesprofil.jahre[1]}, Mitte
+      Deutschlands).
+    </p>
+    <ol>
+      <li>
+        <strong>Ertrag pro Tag:</strong> Dein Jahresertrag wird so auf die 365 Tage verteilt, wie die Sonne in Deutschland
+        tatsächlich scheint – bei senkrechten Modulen nach Süden bringt der Juni etwa{' '}
+        {formatNumber(verhaeltnisJuniDezember, 1)}-mal so viel wie der Dezember.
+      </li>
+      <li>
+        <strong>Direkter Verbrauch:</strong> Pro Tag kannst du nur eine bestimmte Menge Solarstrom sofort verbrauchen. Diese
+        Menge bestimmen wir so, dass über das Jahr genau dein Eigenverbrauchsanteil herauskommt. Dadurch entsteht im Winter
+        kaum Überschuss, im Sommer viel.
+      </li>
+      <li><strong>Laden:</strong> Der Überschuss eines Tages lädt den Speicher, bis er voll ist.</li>
+      <li>
+        <strong>Entladen:</strong> In den dunklen Stunden gibt der Speicher Strom ab – höchstens so viel, wie dein Haushalt
+        dann braucht (Verbrauch abends und nachts × dunkle Stunden des Tages). Verluste beim Laden und Entladen ziehen wir
+        über den Wirkungsgrad ab.
+      </li>
+      <li>
+        <strong>Eigenverbrauch des Speichers:</strong> Seinen Dauerverbrauch über alle 8.760 Stunden des Jahres ziehen wir vom
+        Nutzen ab.
+      </li>
+      <li>
+        <strong>Wirtschaftlichkeit:</strong> Zusätzlich genutzter Strom × Strompreis ergibt die Ersparnis. Amortisation =
+        Mehrkosten ÷ Ersparnis pro Jahr. „Lohnt sich“ heißt: bezahlt nach höchstens drei Vierteln der Lebensdauer, „knapp“:
+        innerhalb der Lebensdauer.
+      </li>
+    </ol>
+    <p>
+      <strong>Vereinfachungen:</strong> Wir rechnen in Tagesbilanzen, nicht in Minuten. Alterung des Speichers und
+      Preisänderungen bleiben unberücksichtigt. Strom, der ins Netz geht, wird nicht vergütet.
+    </p>
+
+    <h3>Standardwerte und Quellen</h3>
+    <p>
+      Für Balkon-Speicher gibt es bisher kaum unabhängige Messwerte zu Wirkungsgrad und Eigenverbrauch. Wir nutzen deshalb
+      vorsichtige Annahmen und kennzeichnen sie. Alle Werte kannst du im Rechner ändern.
+    </p>
+  </article>
+  <SourcesTable
+    rows={[
+      { name: 'Mehrkosten Speicher', wert: SPEICHER_MEHRKOSTEN },
+      { name: 'Nutzbare Kapazität', wert: SPEICHER_KAPAZITAET },
+      { name: 'Wirkungsgrad', wert: SPEICHER_WIRKUNGSGRAD },
+      { name: 'Eigenverbrauch Speicher', wert: SPEICHER_STANDBY },
+      { name: 'Verbrauch abends/nachts', wert: HAUSHALT_GRUNDLAST },
+      { name: 'Lebensdauer', wert: SPEICHER_LEBENSDAUER },
+      { name: 'Eigenverbrauch ohne Speicher', wert: BKW_EIGENVERBRAUCH },
+      { name: 'Einspeisevergütung', wert: BKW_EINSPEISEVERGUETUNG },
+      { name: 'Strompreis', wert: STROMPREIS, decimals: 1 },
+    ]}
+  />
+
+  <article class="prose-page mt-10">
+    <h2>Rechenbeispiel</h2>
+    <p>
+      Ein Balkonkraftwerk mit {formatNumber(BKW_MODULLEISTUNG.wert)} Wp hängt senkrecht am Südbalkon und erzeugt rund{' '}
+      {formatNumber(standard.jahresertragKwh)} kWh im Jahr. {formatNumber(standard.eigenverbrauchOhneProzent)} % davon werden direkt
+      verbraucht. Abends und nachts braucht der Haushalt im Schnitt {formatNumber(standard.grundlastW)} W. Dazu kommt ein Speicher
+      mit {formatNumber(standard.kapazitaetKwh)} kWh nutzbarer Kapazität für{' '}
+      {formatEuro(standard.mehrkostenEuro)} Aufpreis.
+    </p>
+    <ul>
+      <li>Überschuss ohne Speicher: rund {formatNumber(Math.round(ergebnis.ueberschussKwh))} kWh pro Jahr</li>
+      <li>Davon in den Speicher geladen: {formatNumber(Math.round(ergebnis.geladenKwh))} kWh</li>
+      <li>
+        Nach Verlusten abgegeben: {formatNumber(Math.round(ergebnis.abgegebenKwh))} kWh, abzüglich{' '}
+        {formatNumber(Math.round(ergebnis.standbyKwh))} kWh Eigenverbrauch = <strong>{aus.netto}</strong>
+      </li>
+      <li>Ersparnis: {aus.netto} × {formatNumber(STROMPREIS.wert / 100, 3)} € ≈ <strong>{aus.ersparnis} pro Jahr</strong></li>
+      <li>
+        Amortisation: {formatEuro(standard.mehrkostenEuro)} ÷ {aus.ersparnis} ≈ <strong>{aus.amortisation}</strong> –
+        Urteil: {URTEIL_TEXT[ergebnis.urteil].toLowerCase()}
+      </li>
+    </ul>
+    <p>
+      Mit einer größeren Anlage (rund 1.300 kWh Ertrag, 35 % Eigenverbrauch) gibt es zwar viel mehr Überschuss – der
+      2-kWh-Speicher kann davon aber auch nur {formatNumber(Math.round(grosseAnlage.geladenKwh))} kWh aufnehmen. Die
+      Amortisation liegt dann bei {formatSpeicherAmortisation(grosseAnlage.amortisationJahre)}.
+    </p>
+
+    <h3>Speichergröße im Vergleich</h3>
+    <p>
+      Gleiche Anlage wie im Beispiel, Mehrkosten anteilig zur Größe ({formatEuro(SPEICHER_MEHRKOSTEN.wert / 2)} pro kWh angenommen):
+    </p>
+  </article>
+  <div class="mt-4 overflow-x-auto rounded-xl border border-line">
+    <table class="w-full min-w-[32rem] text-right text-sm">
+      <caption class="sr-only">Nutzen und Amortisation nach Speichergröße</caption>
+      <thead class="bg-surface text-ink">
+        <tr>
+          <th scope="col" class="px-4 py-3 text-left font-semibold">Kapazität</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Mehrkosten</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Zusätzlich genutzt</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Ersparnis/Jahr</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Amortisation</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-line text-ink-soft">
+        {
+          groessen.map(({ kwh, r }) => (
+            <tr>
+              <th scope="row" class="px-4 py-3 text-left font-medium text-ink">
+                {kwh} kWh
+              </th>
+              <td class="px-4 py-3 tabular-nums">{formatEuro((SPEICHER_MEHRKOSTEN.wert / 2) * kwh)}</td>
+              <td class="px-4 py-3 tabular-nums">{formatNumber(Math.round(r.nettoKwh))} kWh</td>
+              <td class="px-4 py-3 tabular-nums">{formatEuro(r.ersparnisJahrEuro)}</td>
+              <td class="px-4 py-3 tabular-nums">{formatSpeicherAmortisation(r.amortisationJahre)}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <article class="prose-page mt-10">
+    <h2>Typische Fehler bei der Berechnung</h2>
+    <ul>
+      <li>
+        <strong>Brutto- statt nutzbarer Kapazität:</strong> Ein Teil der Batterie bleibt zum Schutz immer geladen. Rechne mit
+        der nutzbaren Kapazität aus dem Datenblatt.
+      </li>
+      <li>
+        <strong>Eigenverbrauch des Speichers vergessen:</strong> Der Speicher läuft rund um die Uhr. Schon wenige Watt
+        fressen einen spürbaren Teil der Ersparnis auf.
+      </li>
+      <li>
+        <strong>Speicher und Balkonkraftwerk zusammen gerechnet:</strong> Ein Komplettset mit Speicher kann sich insgesamt
+        rechnen, obwohl der Speicher allein ein Verlustgeschäft ist. Rechne den Aufpreis für den Speicher getrennt.
+      </li>
+      <li>
+        <strong>Zu großer Speicher:</strong> Mehr Kapazität bringt nur etwas, wenn du nachts auch mehr Strom brauchst. Sonst ist
+        der Speicher morgens noch halb voll.
+      </li>
+      <li>
+        <strong>Winter vergessen:</strong> Von November bis Februar reicht der Solarstrom eines Balkonkraftwerks oft nicht
+        einmal für den Tagesverbrauch. Der Speicher hat dann monatelang nichts zu tun.
+      </li>
+    </ul>
+    <p class="text-sm">
+      Stand der Standardwerte: Strompreis {formatStand(STROMPREIS.stand)}, Speicherkosten {formatStand(SPEICHER_MEHRKOSTEN.stand)}.
+    </p>
+  </article>
+</CalculatorLayout>
+
+<script>
+  import { setupCalculator } from '@/lib/ui/calculator';
+  import { berechneSpeicher, type Montage } from '@/lib/calculators/speicher';
+  import { ausgabeSpeicher, ansageSpeicher } from '@/lib/calculators/speicher-ausgabe';
+
+  setupCalculator('speicher', {
+    read: (f) => ({
+      jahresertragKwh: f.number('ertrag'),
+      montage: f.select<Montage>('montage'),
+      eigenverbrauchOhneProzent: f.number('eigenverbrauch'),
+      kapazitaetKwh: f.number('kapazitaet'),
+      grundlastW: f.number('grundlast'),
+      wirkungsgradProzent: f.number('wirkungsgrad'),
+      standbyW: f.number('standby'),
+      mehrkostenEuro: f.number('mehrkosten'),
+      strompreisCt: f.number('strompreis'),
+      lebensdauerJahre: f.number('lebensdauer'),
+    }),
+    compute: berechneSpeicher,
+    outputs: ausgabeSpeicher,
+    hints: (r) => r.hinweise,
+    announce: ansageSpeicher,
+  });
+</script>

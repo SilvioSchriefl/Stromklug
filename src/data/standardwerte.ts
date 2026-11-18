@@ -91,6 +91,61 @@ export const STROMPREIS_STEIGERUNG: Standardwert = {
   annahme: true,
 };
 
+// ---------- Batteriespeicher fürs Balkonkraftwerk ----------
+
+export const SPEICHER_MEHRKOSTEN: Standardwert = {
+  wert: 750,
+  einheit: '€',
+  quelle: 'Verbraucherzentrale: Aufpreis für einen Speicher ca. 500 bis 1.000 Euro (Mittelwert)',
+  url: BKW_MODULLEISTUNG.url,
+  stand: '2026-07-24',
+};
+
+export const SPEICHER_KAPAZITAET: Standardwert = {
+  wert: 2,
+  einheit: 'kWh',
+  quelle: 'Typische Größe aktueller Balkonkraftwerk-Speicher (nutzbare Kapazität laut Datenblatt prüfen)',
+  stand: '2026-11-18',
+  annahme: true,
+};
+
+export const SPEICHER_WIRKUNGSGRAD: Standardwert = {
+  wert: 85,
+  einheit: '%',
+  quelle:
+    'Vorsichtige Annahme für Laden + Entladen. Zum Vergleich: große Hausspeicher erreichen in der HTW-Stromspeicher-Inspektion 2026 Systemkennzahlen von 89 bis 97 %',
+  url: 'https://solar.htw-berlin.de/studien/stromspeicher-inspektion-2026/',
+  stand: '2026-11-18',
+  annahme: true,
+};
+
+export const SPEICHER_STANDBY: Standardwert = {
+  wert: 5,
+  einheit: 'W',
+  quelle:
+    'Annahme für den Eigenverbrauch des Speichers. Zum Vergleich: In der HTW-Stromspeicher-Inspektion 2026 lagen einige Hausspeicher im Standby unter 6 W',
+  url: 'https://solar.htw-berlin.de/studien/stromspeicher-inspektion-2026/',
+  stand: '2026-11-18',
+  annahme: true,
+};
+
+export const HAUSHALT_GRUNDLAST: Standardwert = {
+  wert: 100,
+  einheit: 'W',
+  quelle:
+    'Annahme für den durchschnittlichen Verbrauch abends und nachts (Kühlschrank, Router, Standby-Geräte). Am besten selbst messen',
+  stand: '2026-11-18',
+  annahme: true,
+};
+
+export const SPEICHER_LEBENSDAUER: Standardwert = {
+  wert: 10,
+  einheit: 'Jahre',
+  quelle: 'Annahme: Nutzungsdauer des Speichers, orientiert an üblichen Herstellergarantien',
+  stand: '2026-11-18',
+  annahme: true,
+};
+
 /** "2026-10-28" → "Oktober 2026" */
 export function formatStand(stand: string): string {
   const [jahr, monat] = stand.split('-').map(Number);

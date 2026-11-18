@@ -45,7 +45,7 @@ export const CALCULATORS: CalculatorEntry[] = [
     slug: 'balkonkraftwerk-speicher-rechner',
     title: 'Batteriespeicher fürs Balkonkraftwerk',
     teaser: 'Lohnt sich ein Speicher, oder ist er teurer als der Strom, den er rettet?',
-    status: 'bald',
+    status: 'live',
   },
   {
     slug: 'standby-kosten-rechner',

@@ -9,7 +9,9 @@
     "preview": "astro preview",
     "check": "astro check",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check:html": "node scripts/check-html.mjs",
+    "verify": "vitest run && astro check && astro build && node scripts/check-html.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "3.7.6",
