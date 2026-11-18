@@ -9,6 +9,8 @@ import SiteFooter from '@/components/SiteFooter.astro';
 import { SITE } from '@/config/site';
 // Hauptschrift früh laden, damit der Text beim Laden nicht springt
 import interLatin from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
+import { ogBildFuer } from '@/lib/og/seiten';
+import { OG_BREITE, OG_HOEHE } from '@/lib/og/bild';
 
 interface Props {
   title: string;
@@ -17,9 +19,13 @@ interface Props {
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   /** true = Seite nicht in Google aufnehmen (z. B. Impressum) */
   noindex?: boolean;
+  /** "article" für Ratgeber-Artikel, sonst "website" */
+  ogTyp?: 'website' | 'article';
 }
 
-const { title, description, jsonLd, noindex = false } = Astro.props;
+const { title, description, jsonLd, noindex = false, ogTyp = 'website' } = Astro.props;
+// Vorschaubild: wird beim Build unter /og/… erzeugt (siehe src/lib/og/)
+const ogBild = new URL(await ogBildFuer(Astro.url.pathname), Astro.site);
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const fullTitle = Astro.url.pathname === '/' ? `${SITE.name} – ${SITE.claim}` : `${title} | ${SITE.name}`;
 ---
@@ -38,12 +44,18 @@ const fullTitle = Astro.url.pathname === '/' ? `${SITE.name} – ${SITE.claim}` 
     <meta name="theme-color" content="#047857" />
 
     <!-- Open Graph (Vorschau beim Teilen in WhatsApp, Facebook usw.) -->
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogTyp} />
     <meta property="og:locale" content={SITE.locale} />
     <meta property="og:site_name" content={SITE.name} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogBild} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content={String(OG_BREITE)} />
+    <meta property="og:image:height" content={String(OG_HOEHE)} />
+    <meta property="og:image:alt" content={fullTitle} />
+    <meta name="twitter:card" content="summary_large_image" />
 
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 

@@ -108,6 +108,7 @@ src/
 ├── lib/
 │   ├── calculators/        ← Rechenlogik + Tests (*.test.ts) + Texte (*-ausgabe.ts)
 │   ├── ui/calculator.ts    ← verbindet Formular und Rechenlogik im Browser
+│   ├── og/                 ← Vorschaubilder (Liste der Seiten + Gestaltung)
 │   └── format.ts           ← deutsche Zahlen/Euro-Formatierung
 ├── components/
 │   ├── calculator/         ← Rechner-Bausteine (Felder, Ergebnis, Rahmen)
@@ -155,6 +156,16 @@ Dann in Cloudflare unter *Workers & Pages → stromklug → Custom domains* die 
 ### Cloudflare-Statistik einschalten (optional)
 
 Token aus *Cloudflare → Web Analytics* in `src/config/site.ts` bei `cloudflareAnalyticsToken` eintragen. Der passende Abschnitt in der Datenschutzerklärung erscheint dann automatisch. Vorher die rechtliche Einordnung prüfen (§ 25 TDDDG ist bei solchen Skripten umstritten).
+
+### Vorschaubilder (beim Teilen in WhatsApp, Facebook & Co.)
+
+Beim Bauen entsteht für jede wichtige Seite automatisch ein Bild (1200 × 630 Pixel) mit Titel und Kurzbeschreibung, z. B. `/og/balkonkraftwerk-rechner.png`. **Rechner und Ratgeber-Artikel bekommen ihr Bild von selbst** – du musst nichts tun.
+
+- **Gestaltung ändern** (Farben, Schriftgröße, Fußzeile): `src/lib/og/bild.ts`
+- **Weitere Seite mit eigenem Bild:** in `src/lib/og/seiten.ts` einen Eintrag ergänzen. Seiten ohne Eintrag (z. B. Impressum) nutzen das Startseiten-Bild.
+- **Ansehen:** nach `npm run build` liegen die Bilder in `dist/og/`.
+
+> Vorschauen funktionieren erst richtig, wenn die echte Domain eingetragen ist (siehe „Eigene Domain eintragen“), denn die Bildadresse enthält die Domain.
 
 ### PVGIS-Solardaten neu holen (selten nötig)
 
