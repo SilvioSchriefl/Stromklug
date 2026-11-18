@@ -15,7 +15,7 @@ import { SITE, NAV_LINKS } from '@/config/site';
       <ul class="flex items-center gap-1 text-sm font-medium sm:gap-4 sm:text-base">
         {
           NAV_LINKS.map((link) => (
-            <li>
+            <li class={link.mobil ? undefined : 'hidden sm:block'}>
               <a href={link.href} class="block rounded-md px-2 py-2 whitespace-nowrap text-ink-soft hover:bg-surface hover:text-ink">
                 {link.label}
               </a>

@@ -61,10 +61,11 @@ export const CALCULATORS: CalculatorEntry[] = [
   },
 ];
 
+/** mobil: false = auf schmalen Bildschirmen ausblenden (Logo führt ohnehin zur Startseite) */
 export const NAV_LINKS = [
-  { href: '/', label: 'Start' },
-  { href: '/#rechner', label: 'Rechner' },
-  { href: '/ueber-uns/', label: 'Über uns' },
+  { href: '/', label: 'Start', mobil: false },
+  { href: '/#rechner', label: 'Rechner', mobil: true },
+  { href: '/ueber-uns/', label: 'Über uns', mobil: true },
 ];
 
 export const FOOTER_LINKS = [

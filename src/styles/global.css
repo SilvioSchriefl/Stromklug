@@ -37,6 +37,17 @@
     -webkit-text-size-adjust: 100%;
   }
 
+  /* Lange deutsche Wörter ("Verbraucherstreitbeilegung") auf schmalen Handys trennen */
+  body {
+    overflow-wrap: break-word;
+  }
+  h1,
+  h2,
+  h3,
+  .prose-page {
+    hyphens: auto;
+  }
+
   /* Deutliche Fokus-Markierung für Tastatur-Nutzer */
   :focus-visible {
     outline: 3px solid var(--color-sea-600);
