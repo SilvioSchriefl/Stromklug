@@ -6,13 +6,16 @@ interface Props {
   options: { value: string; label: string }[];
   hint?: string;
   formId: string;
+  /** Nur anzeigen, wenn ein anderes Auswahlfeld einen Wert hat, z. B. "modus=leistung" */
+  showWhen?: string;
+  hidden?: boolean;
 }
 
-const { name, label, value, options, hint, formId } = Astro.props;
+const { name, label, value, options, hint, formId, showWhen, hidden = false } = Astro.props;
 const id = `${formId}-${name}`;
 ---
 
-<div class="field">
+<div class="field" data-show-when={showWhen} hidden={hidden}>
   <label for={id} class="block font-semibold text-ink">{label}</label>
   {hint && <p id={`${id}-hint`} class="mt-1 text-sm text-ink-soft">{hint}</p>}
   <select

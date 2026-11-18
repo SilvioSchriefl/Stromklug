@@ -58,13 +58,28 @@ export function setupCalculator<I, O>(formId: string, options: CalculatorOptions
   const resultPanel = form.querySelector<HTMLElement>('[data-result-panel]');
   let announceTimer: number | undefined;
 
+  /** Felder mit data-show-when="auswahl=wert" nur zeigen, wenn die Auswahl passt */
+  const syncVisibility = () => {
+    form.querySelectorAll<HTMLElement>('[data-show-when]').forEach((el) => {
+      const [name, wert] = (el.dataset.showWhen ?? '').split('=');
+      const ctrl = form.elements.namedItem(name);
+      if (ctrl instanceof HTMLSelectElement) el.hidden = ctrl.value !== wert;
+    });
+  };
+
   const update = () => {
     let valid = true;
+    syncVisibility();
 
     const reader: FormReader = {
       number(name) {
         const el = form.elements.namedItem(name);
         if (!(el instanceof HTMLInputElement)) throw new Error(`Feld "${name}" fehlt`);
+        // Ausgeblendete Felder werden nicht geprüft und zählen nicht
+        if (el.closest('[hidden]')) {
+          setFieldError(el, '');
+          return Number.NaN;
+        }
         const value = parseGermanNumber(el.value);
         const min = el.dataset.min !== undefined ? Number(el.dataset.min) : -Infinity;
         const max = el.dataset.max !== undefined ? Number(el.dataset.max) : Infinity;

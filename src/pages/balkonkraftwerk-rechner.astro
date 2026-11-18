@@ -3,6 +3,7 @@ import CalculatorLayout from '@/layouts/CalculatorLayout.astro';
 import CalculatorShell from '@/components/calculator/CalculatorShell.astro';
 import NumberField from '@/components/calculator/NumberField.astro';
 import SelectField from '@/components/calculator/SelectField.astro';
+import StrompreisField from '@/components/calculator/StrompreisField.astro';
 import ResultMain from '@/components/calculator/ResultMain.astro';
 import ResultTiles from '@/components/calculator/ResultTiles.astro';
 import SourcesTable from '@/components/SourcesTable.astro';
@@ -178,17 +179,7 @@ const faq = [
       max={100}
       hint="Wie viel vom erzeugten Strom du direkt selbst verbrauchst. Grobe Faustwerte: 1 Modul ca. 70 %, 2 Module ca. 50 %, 4 Module eher 30–40 %."
     />
-    <NumberField
-      formId={FORM_ID}
-      name="strompreis"
-      label="Strompreis"
-      unit="ct/kWh"
-      value={standard.strompreisCt}
-      decimals={1}
-      min={1}
-      max={150}
-      hint={`Am genauesten: der Arbeitspreis von deiner Stromrechnung. Standard: Durchschnitt laut BDEW (${formatStand(STROMPREIS.stand)}).`}
-    />
+    <StrompreisField formId={FORM_ID} />
     <NumberField
       formId={FORM_ID}
       name="anschaffung"

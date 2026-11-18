@@ -1,0 +1,25 @@
+---
+/** Gemeinsames Strompreis-Feld für alle Rechner – Standardwert und Quelle aus standardwerte.ts */
+import NumberField from './NumberField.astro';
+import { STROMPREIS, formatStand } from '@/data/standardwerte';
+
+interface Props {
+  formId: string;
+  name?: string;
+  label?: string;
+  value?: number;
+}
+const { formId, name = 'strompreis', label = 'Strompreis', value = STROMPREIS.wert } = Astro.props;
+---
+
+<NumberField
+  formId={formId}
+  name={name}
+  label={label}
+  unit="ct/kWh"
+  value={value}
+  decimals={1}
+  min={1}
+  max={150}
+  hint={`Am genauesten: der Arbeitspreis von deiner Stromrechnung. Standard: Durchschnitt laut BDEW (${formatStand(STROMPREIS.stand)}).`}
+/>

@@ -1,0 +1,297 @@
+---
+import CalculatorLayout from '@/layouts/CalculatorLayout.astro';
+import CalculatorShell from '@/components/calculator/CalculatorShell.astro';
+import NumberField from '@/components/calculator/NumberField.astro';
+import SelectField from '@/components/calculator/SelectField.astro';
+import StrompreisField from '@/components/calculator/StrompreisField.astro';
+import ResultMain from '@/components/calculator/ResultMain.astro';
+import ResultTiles from '@/components/calculator/ResultTiles.astro';
+import SourcesTable from '@/components/SourcesTable.astro';
+import AffiliateBox from '@/components/affiliate/AffiliateBox.astro';
+import { berechneStromkosten, STUNDEN_PRO_JAHR, type StromkostenEingabe } from '@/lib/calculators/stromkosten';
+import { ausgabeStromkosten } from '@/lib/calculators/stromkosten-ausgabe';
+import { STROMPREIS, formatStand } from '@/data/standardwerte';
+import { formatEuroCent, formatNumber } from '@/lib/format';
+
+const FORM_ID = 'strom';
+
+// Beispielwerte für den Start (kein Quellenwert – nur ein Ausgangspunkt zum Anpassen)
+const standard: StromkostenEingabe = {
+  modus: 'leistung',
+  leistungW: 100,
+  stundenProTag: 4,
+  tageProWoche: 7,
+  standbyW: 0,
+  jahresverbrauchKwh: 150,
+  strompreisCt: STROMPREIS.wert,
+};
+const ergebnis = berechneStromkosten(standard);
+const aus = ausgabeStromkosten(ergebnis, standard);
+const preis = formatNumber(STROMPREIS.wert, 1);
+
+// Beispiele für Texte – aus der Rechenlogik
+const beispielTv = berechneStromkosten({ ...standard, leistungW: 100, stundenProTag: 4, standbyW: 0.5 });
+const einWattDauer = berechneStromkosten({ ...standard, leistungW: 1, stundenProTag: 24 });
+const label150 = berechneStromkosten({ ...standard, modus: 'jahresverbrauch', jahresverbrauchKwh: 150 });
+
+const faq = [
+  {
+    frage: 'Wie berechne ich die Stromkosten eines Geräts?',
+    antwort: `Leistung in Watt × Betriebsstunden ÷ 1.000 ergibt den Verbrauch in Kilowattstunden (kWh). Diesen multiplizierst du mit deinem Strompreis. Beispiel: Ein Gerät mit 100 W läuft 4 Stunden täglich. Das sind 0,1 kW × 1.460 Stunden = 146 kWh im Jahr, bei ${preis} ct/kWh also rund ${formatEuroCent(ergebnis.kostenJahrEuro)}.`,
+  },
+  {
+    frage: 'Was kostet eine Kilowattstunde Strom?',
+    antwort: `Laut BDEW zahlen Haushalte 2026 im Durchschnitt ${preis} Cent pro kWh (Stand ${formatStand(STROMPREIS.stand)}). Dein eigener Preis kann deutlich abweichen. Am genauesten rechnest du mit dem Arbeitspreis aus deinem Stromvertrag oder deiner letzten Jahresabrechnung.`,
+  },
+  {
+    frage: 'Wo finde ich die Leistung meines Geräts?',
+    antwort:
+      'Auf dem Typenschild (meist auf der Rück- oder Unterseite) oder in der Bedienungsanleitung steht die Leistung in Watt. Das ist allerdings oft die Höchstleistung. Wie viel ein Gerät im Alltag wirklich verbraucht, misst du am genauesten mit einem Strommessgerät für die Steckdose.',
+  },
+  {
+    frage: 'Warum kann ich beim Kühlschrank nicht einfach Leistung × 24 Stunden rechnen?',
+    antwort:
+      'Der Kompressor eines Kühlschranks läuft nicht ununterbrochen, sondern schaltet sich immer wieder ab. Leistung × 24 Stunden ergibt deshalb einen viel zu hohen Wert. Nutze besser den Jahresverbrauch in kWh vom Energielabel und wähle im Rechner „Jahresverbrauch“.',
+  },
+  {
+    frage: 'Was ist der Unterschied zwischen Watt und Kilowattstunde?',
+    antwort:
+      'Watt (W) beschreibt, wie viel Leistung ein Gerät in einem Moment braucht. Die Kilowattstunde (kWh) ist die verbrauchte Energiemenge über die Zeit: 1.000 Watt eine Stunde lang ergeben 1 kWh. Bezahlt wird beim Strom immer die Energiemenge in kWh.',
+  },
+  {
+    frage: 'Wie viel kostet Standby?',
+    antwort: `Jedes Watt, das ein Gerät dauerhaft im Standby zieht, summiert sich auf ${formatNumber(einWattDauer.verbrauchKwhJahr, 2)} kWh im Jahr – bei ${preis} ct/kWh rund ${formatEuroCent(einWattDauer.kostenJahrEuro)}. Klingt wenig, aber viele Geräte zusammen machen schnell einen spürbaren Betrag aus.`,
+  },
+];
+---
+
+<CalculatorLayout
+  title="Stromkosten-Rechner: Was kostet ein Gerät pro Jahr?"
+  description="Berechne die Stromkosten eines Geräts pro Jahr, Monat und Stunde – aus Leistung und Nutzungsdauer oder dem Jahresverbrauch vom Energielabel. Mit aktuellem Strompreis."
+  h1="Stromkosten-Rechner: Was kostet ein Gerät?"
+  intro="Finde heraus, was dich Kühlschrank, Fernseher, Spielkonsole oder Heizlüfter pro Jahr kosten. Du brauchst nur die Leistung und wie lange das Gerät läuft – oder den Jahresverbrauch vom Energielabel."
+  slug="stromkosten-rechner"
+  faq={faq}
+  related={['standby-kosten-rechner', 'stromanbieter-wechsel-rechner', 'balkonkraftwerk-rechner']}
+>
+  <CalculatorShell id={FORM_ID}>
+    <Fragment slot="result">
+      <ResultMain label="Kosten pro Jahr" valueKey="kostenJahr" value={aus.kostenJahr} sentenceKey="satz" sentence={aus.satz} />
+      <ResultTiles
+        tiles={[
+          { label: 'Kosten pro Monat', key: 'kostenMonat', value: aus.kostenMonat },
+          { label: 'Verbrauch pro Jahr', key: 'verbrauch', value: aus.verbrauch, subKey: 'standby', sub: aus.standby },
+          { label: 'Kosten pro Betriebsstunde', key: 'proStunde', value: aus.proStunde, subKey: 'proStundeSub', sub: aus.proStundeSub },
+        ]}
+      />
+    </Fragment>
+
+    <SelectField
+      formId={FORM_ID}
+      name="modus"
+      label="Was weißt du über das Gerät?"
+      value={standard.modus}
+      options={[
+        { value: 'leistung', label: 'Leistung und Nutzungsdauer' },
+        { value: 'jahresverbrauch', label: 'Jahresverbrauch (Energielabel)' },
+      ]}
+    />
+    <StrompreisField formId={FORM_ID} />
+
+    <NumberField
+      formId={FORM_ID}
+      name="leistung"
+      label="Leistung im Betrieb"
+      unit="W"
+      value={standard.leistungW}
+      min={0}
+      max={10000}
+      hint="Steht auf dem Typenschild. Genauer: mit einem Strommessgerät messen."
+      showWhen="modus=leistung"
+    />
+    <NumberField
+      formId={FORM_ID}
+      name="stunden"
+      label="Betriebsstunden pro Tag"
+      unit="h"
+      value={standard.stundenProTag}
+      decimals={1}
+      min={0}
+      max={24}
+      showWhen="modus=leistung"
+    />
+    <NumberField
+      formId={FORM_ID}
+      name="tage"
+      label="Nutzungstage pro Woche"
+      unit="Tage"
+      value={standard.tageProWoche}
+      min={1}
+      max={7}
+      showWhen="modus=leistung"
+    />
+    <NumberField
+      formId={FORM_ID}
+      name="standby"
+      label="Leistung im Standby"
+      unit="W"
+      value={standard.standbyW}
+      decimals={1}
+      min={0}
+      max={100}
+      hint="Verbrauch, wenn das Gerät aus, aber eingesteckt ist. 0 = komplett vom Netz."
+      showWhen="modus=leistung"
+    />
+    <NumberField
+      formId={FORM_ID}
+      name="jahresverbrauch"
+      label="Jahresverbrauch"
+      unit="kWh"
+      value={standard.jahresverbrauchKwh}
+      min={0}
+      max={50000}
+      hint="Beim Kühl- oder Gefriergerät direkt auf dem Energielabel (kWh/annum)."
+      showWhen="modus=jahresverbrauch"
+      hidden
+    />
+
+    <p slot="sticky" class="flex items-baseline justify-between gap-3 text-sm">
+      <span class="text-ink-soft">Kosten</span>
+      <strong class="text-base text-ink" data-out="sticky">{aus.sticky}</strong>
+    </p>
+  </CalculatorShell>
+
+  <AffiliateBox ids={['strommessgeraet']} titel="Verbrauch selbst messen" />
+
+  <article class="prose-page mt-12">
+    <h2>So rechnen wir</h2>
+    <p>Die Rechnung ist einfach und immer gleich – nur die Angaben zum Verbrauch unterscheiden sich.</p>
+    <p class="rounded-lg bg-surface p-4 font-mono text-sm text-ink">
+      Betriebsstunden pro Jahr = Stunden pro Tag × Tage pro Woche × 52,14<br />
+      Verbrauch (kWh) = Leistung (W) × Betriebsstunden ÷ 1.000<br />
+      Standby (kWh) = Standby-Leistung (W) × übrige Stunden des Jahres ÷ 1.000<br />
+      Kosten = (Verbrauch + Standby) × Strompreis
+    </p>
+    <ul>
+      <li>
+        Ein Jahr hat bei uns 365 Tage, also {formatNumber(STUNDEN_PRO_JAHR)} Stunden. Eine Woche entspricht 365 ÷ 7 ≈ 52,14
+        Wochen pro Jahr.
+      </li>
+      <li>Standby rechnen wir für alle Stunden, in denen das Gerät nicht läuft.</li>
+      <li>
+        Wir rechnen mit voller Leistung während der gesamten Betriebszeit. Viele Geräte brauchen im Alltag weniger – dann ist
+        das Ergebnis eine Obergrenze.
+      </li>
+      <li>Der Grundpreis deines Stromvertrags bleibt unberücksichtigt, weil er nicht vom einzelnen Gerät abhängt.</li>
+    </ul>
+
+    <h3>Standardwerte und Quellen</h3>
+    <p>
+      Leistung und Nutzungsdauer sind nur Beispielwerte zum Anpassen. Für den Strompreis nutzen wir diese Quelle:
+    </p>
+  </article>
+  <SourcesTable rows={[{ name: 'Strompreis', wert: STROMPREIS, decimals: 1 }]} />
+
+  <article class="prose-page mt-10">
+    <h3>So liest du das Energielabel</h3>
+    <p>Das EU-Energielabel nennt den Verbrauch je nach Gerät in unterschiedlichen Einheiten:</p>
+  </article>
+  <div class="mt-4 overflow-x-auto rounded-xl border border-line">
+    <table class="w-full min-w-[32rem] text-left text-sm">
+      <caption class="sr-only">Verbrauchsangaben auf dem EU-Energielabel</caption>
+      <thead class="bg-surface text-ink">
+        <tr>
+          <th scope="col" class="px-4 py-3 font-semibold">Gerät</th>
+          <th scope="col" class="px-4 py-3 font-semibold">Angabe auf dem Label</th>
+          <th scope="col" class="px-4 py-3 font-semibold">So nutzt du sie im Rechner</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-line text-ink-soft">
+        <tr>
+          <th scope="row" class="px-4 py-3 font-medium text-ink">Kühl- und Gefriergeräte</th>
+          <td class="px-4 py-3">kWh pro Jahr (kWh/annum)</td>
+          <td class="px-4 py-3">direkt als Jahresverbrauch eintragen</td>
+        </tr>
+        <tr>
+          <th scope="row" class="px-4 py-3 font-medium text-ink">Waschmaschine, Geschirrspüler</th>
+          <td class="px-4 py-3">kWh pro 100 Programmdurchläufe</td>
+          <td class="px-4 py-3">÷ 100 × deine Durchläufe pro Jahr</td>
+        </tr>
+        <tr>
+          <th scope="row" class="px-4 py-3 font-medium text-ink">Fernseher, Monitore</th>
+          <td class="px-4 py-3">kWh pro 1.000 Stunden</td>
+          <td class="px-4 py-3">Wert = durchschnittliche Leistung in Watt, als Leistung eintragen</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <article class="prose-page mt-10">
+    <h2>Rechenbeispiel</h2>
+    <p>
+      Ein Fernseher braucht im Betrieb 100 W und läuft jeden Tag 4 Stunden. Die restlichen 20 Stunden steht er mit 0,5 W im
+      Standby. Strompreis: {preis} ct/kWh.
+    </p>
+    <ul>
+      <li>Betrieb: 100 W × 4 h × 365 Tage ÷ 1.000 = {formatNumber(beispielTv.betriebKwh)} kWh</li>
+      <li>
+        Standby: 0,5 W × 20 h × 365 Tage ÷ 1.000 = {formatNumber(beispielTv.standbyKwh, 2)} kWh
+      </li>
+      <li>
+        Zusammen: {formatNumber(beispielTv.verbrauchKwhJahr, 1)} kWh × {formatNumber(STROMPREIS.wert / 100, 3)} € =
+        <strong>{formatEuroCent(beispielTv.kostenJahrEuro)} pro Jahr</strong>, davon {formatEuroCent(beispielTv.standbyKostenJahrEuro)} für Standby
+      </li>
+    </ul>
+    <p>
+      Ein Kühlschrank mit 150 kWh Jahresverbrauch laut Energielabel kostet bei diesem Preis rund
+      {formatEuroCent(label150.kostenJahrEuro)} im Jahr.
+    </p>
+
+    <h2>Typische Fehler bei der Berechnung</h2>
+    <ul>
+      <li>
+        <strong>Höchstleistung statt tatsächlicher Leistung:</strong> Das Typenschild nennt meist die maximale Leistung. Ein
+        Wasserkocher läuft tatsächlich mit seiner Nennleistung – ein Computer mit 500-W-Netzteil braucht dagegen oft nur einen Bruchteil
+        davon.
+      </li>
+      <li>
+        <strong>Kühlschrank × 24 Stunden:</strong> Geräte mit Thermostat schalten sich immer wieder ab. Für sie ist der
+        Jahresverbrauch vom Energielabel viel genauer.
+      </li>
+      <li>
+        <strong>Watt und Kilowatt verwechselt:</strong> 2.000 W sind 2 kW. Wer Watt direkt mit dem Preis pro kWh multipliziert,
+        liegt um den Faktor 1.000 daneben.
+      </li>
+      <li>
+        <strong>Standby vergessen:</strong> Geräte, die dauerhaft eingesteckt sind, verbrauchen auch „aus“ Strom – oft über alle
+        Stunden des Jahres.
+      </li>
+      <li>
+        <strong>Durchschnittspreis statt eigenem Tarif:</strong> Dein Arbeitspreis kann deutlich vom Durchschnitt abweichen.
+        Ein Blick in die Jahresabrechnung lohnt sich.
+      </li>
+    </ul>
+  </article>
+</CalculatorLayout>
+
+<script>
+  import { setupCalculator } from '@/lib/ui/calculator';
+  import { berechneStromkosten, type StromkostenModus } from '@/lib/calculators/stromkosten';
+  import { ausgabeStromkosten, ansageStromkosten } from '@/lib/calculators/stromkosten-ausgabe';
+
+  setupCalculator('strom', {
+    read: (f) => ({
+      modus: f.select<StromkostenModus>('modus'),
+      leistungW: f.number('leistung'),
+      stundenProTag: f.number('stunden'),
+      tageProWoche: f.number('tage'),
+      standbyW: f.number('standby'),
+      jahresverbrauchKwh: f.number('jahresverbrauch'),
+      strompreisCt: f.number('strompreis'),
+    }),
+    compute: berechneStromkosten,
+    outputs: ausgabeStromkosten,
+    hints: (r) => r.hinweise,
+    announce: ansageStromkosten,
+  });
+</script>

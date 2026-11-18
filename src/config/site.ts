@@ -39,7 +39,7 @@ export const CALCULATORS: CalculatorEntry[] = [
     slug: 'stromkosten-rechner',
     title: 'Stromkosten eines Geräts',
     teaser: 'Was kostet der Kühlschrank, der Fernseher oder die Spielkonsole pro Jahr?',
-    status: 'bald',
+    status: 'live',
   },
   {
     slug: 'balkonkraftwerk-speicher-rechner',
